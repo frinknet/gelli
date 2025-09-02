@@ -8,7 +8,7 @@
 ### This is a kit for those who loathe Python environments, their dependency dramas, and the emotional toll of debugging pip’s heartbreak. Compile, quantize, bake, and export any AI artifact with the casual flair of a caffeinated shell wizard. There are gotchas (there always are), but nothing like a surprise `pip uninstall torch` at 4am. GELLI generates GGUF, not drama. This is especially for working with  small LLMs and building LoRAs.
 
 ```bash
-https://raw.githubusercontent.com/frinknet/wacc/main/utils/install.sh | sh
+https://raw.githubusercontent.com/frinknet/gelli/main/install.sh | sh
 ```
 
 just install and itwill do the rest...
