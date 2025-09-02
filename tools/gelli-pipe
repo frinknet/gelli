@@ -3,6 +3,7 @@ set -e
 
 MODEL=${1:-${GELLI_MODEL:-Qwen/Qwen2.5-0.5B-Instruct}}
 LORAS=${1:-${GELLI_LORAS:-}}
+CTX_SIZE=${GELLI_CTXSIZE:-131072}
 
 shift || true
 
@@ -32,11 +33,11 @@ if [ ! -t 0 ]; then
   PROMPT="$PROMPT\n\n$(cat)"
 fi
 
-gelli-model $MODEL
-gelli-lora $LORAS
+MODEL=$(gelli-model $MODEL)
+LORAS=$(gelli-lora $LORAS)
 
 if [ -n "$LORAS" ]; then
   for f in $LORAS; do FLAGS="$FLAGS --lora $f"; done
 fi
 
-exec llama-cli --model "/models/$(basename "$MODEL").gguf" $FLAGS --ctx-size ${CTX_SIZE:-131072} --prompt "$PROMPT" --temp 0.1 --silent --no-display-prompt
+exec llama-cli --model "/models/$(basename "$MODEL").gguf" $FLAGS --ctx-size $CTX_SIZE --prompt "$PROMPT" --temp 0.1 --silent --no-display-prompt

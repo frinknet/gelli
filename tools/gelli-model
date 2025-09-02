@@ -1,21 +1,62 @@
 #!/usr/bin/env sh
 set -e
 
-MODELS=$@
+fetch_ollama() {                #  $1 = slug   $2 = tag|latest
+  slug="$1"; tag="${2:-latest}"
+  out=$(echo "$slug:$tag" | sed 's#[:/\\]#-#g')
+  dest="/models/$safe.gguf"
 
-fetch() {
-  repo="$1"
-  dest="/models/$(basename "$repo").gguf"
-  url="https://huggingface.co/$repo/resolve/main/model.gguf"
+  [ -f "$out" ] && { echo "$out"; return; }
 
-  if [ -f "$dest" ]; then
-    echo "✓ cached $dest"
-  else
-    echo "↓ $repo → $dest"
-    wget -qO "$dest" "$url"
-  fi
+  echo "↓ ol:$slug:$tag → $out" >&2
+
+  manifest="https://registry.ollama.ai/v2/library/${slug}/manifests/${tag}"
+  digest=$(curl -fsSL "$manifest" | jq -r '.layers[0].digest')
+
+  curl -L "https://registry.ollama.ai/v2/library/${slug}/blobs/$digest" -o "$dest"
+
+  echo "$out"
 }
 
-for m in $MODELS; do
-  fetch "$m"
+fetch_hf() {                    #  $1 = user/repo  $2 = quant  $3 = file
+  repo="$1"; quant="$2"; file="$3"
+  out=$(echo "${repo}-${quant}-${file}" | sed 's#[:/\\]#-#g')
+  dest="/models/$out.gguf"
+
+  [ -f "$dest" ] && { echo "$out"; return; }
+
+  echo "↓ hf:$repo:$quant:$file → $out" >&2
+
+  url="https://huggingface.co/$repo/resolve/main/$file.gguf"
+
+  curl -L "$url" -o "$dest"
+
+  echo "$out"
+}
+
+for arg in "$@"; do
+  case "$arg" in
+    ol:*)
+      spec=${arg#ol:}
+      slug=$(printf '%s\n' "$spec" | cut -d: -f1)
+      tag=$(printf '%s\n' "$spec" | cut -s -d: -f2)
+      fetch_ollama "$slug" "$tag"
+      ;;
+    hf:*)
+      spec=${arg#hf:}
+      repo=$(printf '%s\n' "$spec" | cut -d: -f1)
+      quant=$(printf '%s\n' "$spec" | cut -s -d: -f2)
+      file=$(printf '%s\n' "$spec" | cut -s -d: -f3)
+      fetch_hf "$repo" "$quant" "$file"
+      ;;
+    *)
+      file="/models/$(basename "$arg").gguf"
+      if [ -f "$file" ]; then
+        echo "$arg"
+      else
+        echo "MODEL MISSING → $arg" >&2
+        exit 1
+      fi
+      ;;
+  esac
 done

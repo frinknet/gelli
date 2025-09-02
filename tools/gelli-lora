@@ -12,6 +12,7 @@ fetch() {
     echo "✓ cached $dest"
   else
     echo "↓ $repo → $dest"
+
     wget -qO "$dest" "$url"
   fi
 }
