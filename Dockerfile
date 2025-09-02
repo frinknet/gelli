@@ -2,7 +2,7 @@
 FROM alpine:latest AS build
 
 # get the basic build-deps
-RUN apk add --no-cache build-base cmake git
+RUN apk add --no-cache build-base cmake git  libcurl-dev
 
 WORKDIR /src
 
