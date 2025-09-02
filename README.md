@@ -7,7 +7,7 @@
 3. Easily train LoRAs on your corpus without fuss.
 4. Intended to avoid leakage or other AI security mishaps.
 
-### This is a kit for those who loathe Python environments, their dependency dramas, and the emotional toll of debugging pip’s heartbreak. Compile, quantize, bake, and export any AI artifact with the casual flair of a caffeinated shell wizard. There are gotchas (there always are), but nothing like a surprise `pip uninstall torch` at 4am. GELLI generates GGUF, not drama. This is especially for working with  small LLMs and building LoRAs.
+### Compile, quantize, bake, train, import and export AI artifact with the casual flair...
 
 ```bash
 curl -L https://github.com/frinknet/gelli/raw/main/install.sh | sh
