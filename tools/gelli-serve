@@ -2,11 +2,11 @@
 set -e
 
 # ── user-overridables ───────────────────────────────────────────
-PORT=${1:-${PORT:-7771}}
+PORT=${1:-${GELLI_PORT:-7771}}
 shift || true
-MODEL=${1:-${MODEL:-Qwen/Qwen2.5-0.5B-Instruct}}
+MODEL=${1:-${GELLI_MODEL:-Qwen/Qwen2.5-0.5B-Instruct}}
 shift || true
-LORAS=${*:-${LORAS:-}}
+LORAS=${*:-${GELLI_LORAS:-}}
 FLAGS=""
 
 gelli-model $MODEL

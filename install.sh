@@ -34,6 +34,7 @@ WRAP="$PREFIX/$IMAGE"
 cat > "$WRAP" <<EOF
 #!/bin/sh
 set -eu
+
 IMAGE="$IMAGE:latest"
 VERSION="$VER"
 if [ "\${1:-}" = "update" ]; then
@@ -42,11 +43,13 @@ if [ "\${1:-}" = "update" ]; then
   curl -fsSL "https://github.com/${REPO#*/}/raw/main/install.sh" -o "\$TMP"
   exec sh "\$TMP" "\$VERSION"
 else
-  exec docker run --rm -it \\
+  exec docker run --rm -i \\
     -u "\$(id -u):\$(id -g)" \\
     -v "\$(pwd):/work" \\
     -v gelli-models:/models \\
     -v gelli-loras:/loras \\
+    -e GELLI_MODEL \\
+    -e GELLI_LORAS \\
     "\$IMAGE" "\$@"
 fi
 EOF

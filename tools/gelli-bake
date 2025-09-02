@@ -8,8 +8,11 @@ OUTPUT=""
 for arg in "$@"; do
   case "$arg" in
     lora=*) LORAS="$LORAS ${arg#lora=}" ;;
-    *.gguf) OUTPUT="$arg" ;;
-    *) MODEL="$arg" ;;
+    *) 
+      if [ -z "$MODEL" ]; then
+        MODEL="$arg"
+      else 
+    *) OUTPUT="$arg" ;;
   esac
 done
 
@@ -44,6 +47,4 @@ done
 
 echo "→ Baking $LORAS into $MODEL_FILE"
 
-llama-export-lora --model-base "$MODEL_FILE" --model-out "$OUTPUT" $LORA_ARGS
-
-echo "→ Output: $OUTPUT"
+llama-export-lora --model-base "$MODEL_FILE" --model-out "$OUTPUT.gguf" $LORA_ARGS

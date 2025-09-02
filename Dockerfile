@@ -25,9 +25,9 @@ RUN chmod +x /usr/local/bin/*; \
 	mkdir -p /models /loras /work
 
 # overridable defaults
-ENV LORAS= \
-	MODEL=Qwen/Qwen2.5-0.5B-Instruct \
-	PORT=7771
+ENV GELLI_PORT=7771 \
+	GELLI_MODEL=Qwen/Qwen2.5-0.5B-Instruct \
+	GELLI_LORAS=
 
 ARG VERSION
 RUN test -n "$VERSION" && printf 'GELLI %s\n' "$VERSION" > /etc/VERSION

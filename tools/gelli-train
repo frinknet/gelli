@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -e
 
-MODEL=${1:-${MODEL:-Qwen/Qwen2.5-0.5B-Instruct}}
+MODEL=${1:-${GELLI_MODEL:-Qwen/Qwen2.5-0.5B-Instruct}}
 
 shift
 
