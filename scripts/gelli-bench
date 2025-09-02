@@ -11,4 +11,4 @@ fi
 gelli-model "$MODEL"
 
 echo "→ Benchmarking model: $MODEL"
-benchmark --model "/models/$MODEL.gguf"
+llama-benchmark --model "/models/$MODEL.gguf"

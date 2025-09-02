@@ -58,5 +58,5 @@ chmod +x "$WRAP"
 echo
 echo "✓ installed: $WRAP"
 echo
-"$WRAP" version 
+#"$WRAP" version 
 echo

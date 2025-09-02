@@ -44,6 +44,6 @@ done
 
 echo "→ Baking $LORAS into $MODEL_FILE"
 
-export-lora --model-base "$MODEL_FILE" --model-out "$OUTPUT" $LORA_ARGS
+llama-export-lora --model-base "$MODEL_FILE" --model-out "$OUTPUT" $LORA_ARGS
 
 echo "→ Output: $OUTPUT"

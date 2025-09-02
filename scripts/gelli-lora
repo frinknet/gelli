@@ -19,4 +19,3 @@ fetch() {
 for l in $LORAS; do
   fetch "$l"
 done
-
