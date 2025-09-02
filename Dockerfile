@@ -26,7 +26,7 @@ RUN chmod +x /usr/local/bin/*; \
 
 # overridable defaults
 ENV LORAS= \
-	MODEL=/models/qwen2.5-0.5B.gguf \
+	MODEL=qwen2.5-0.5B \
 	PORT=7771
 
 ARG VERSION
