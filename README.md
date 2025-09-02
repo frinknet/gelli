@@ -1,6 +1,6 @@
 ![logo](logo.svg)
 
-**GELLI** \ˈgel-ē\ ● *proper noun* — *fr. "Generic Engineered LoRA Loader Interface" — That’s what the acronym stands for this week... ● occasionally faux Italian “gellici,” origin debated, purpose not.*
+**GELLI** \ˈgel-ē\ ● *proper noun* — *fr. "Generic Embedded Local Llama Interface" — That’s what the acronym stands for this week... ● occasionally faux Italian “gellici,” origin debated, purpose not.*
 
 1. The lean readable toolbox for wrangling AI models without the Amazon rainforest in tow...
 2. Especially for AI in contrained spacces. Less about large lange models and more about  LoRAs
