@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+set -e
+
+# ── user-overridables ───────────────────────────────────────────
+PORT=${1:-${PORT:-7771}}
+shift || true
+MODEL=${1:-${MODEL:-Qwen/Qwen2.5-0.5B-Instruct}}
+shift || true
+LORAS=${*:-${LORAS:-}}
+FLAGS=""
+
+gelli-model $MODEL
+gelli-lora $LORAS
+
+# ── collect LoRA adapters (env list or auto-scan) ──────────────
+if [ -n "$LORAS" ]; then
+  for f in $LORAS; do FLAGS="$FLAGS --lora /lora/$f.gruf"; done
+fi
+
+exec llama-server --model "/models/$(basename "$MODEL").gguf" $FLAGS --port "$PORT" --ctx-size 131072

@@ -1,0 +1,41 @@
+#!/usr/bin/env sh
+set -e
+
+MODEL=${1:-${MODEL:-Qwen/Qwen2.5-0.5B-Instruct}}
+
+shift || true
+
+LORAS=""
+FLAGS=""
+PROMPT=""
+
+while [ $# -gt 0 ]; do
+  case $1 in
+    --)
+      shift
+      PROMPT="$*"
+      break
+      ;;
+    *)
+      if [ -z "$MODEL" ]; then
+        MODEL="$1"
+      else
+        LORAS="$LORAS $1"
+      fi
+      ;;
+  esac
+  shift
+done
+
+if [ ! -t 0 ]; then
+  PROMPT="$PROMPT\n\n$(cat)"
+fi
+
+gelli-model $MODEL
+gelli-lora $LORAS
+
+if [ -n "$LORAS" ]; then
+  for f in $LORAS; do FLAGS="$FLAGS --lora $f"; done
+fi
+
+exec llama-cli --model "/models/$(basename "$MODEL").gguf" $FLAGS --ctx-size 131072 --prompt "$PROMPT" --temp 0.1 --silent --no-display-prompt

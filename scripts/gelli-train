@@ -1,0 +1,37 @@
+#!/usr/bin/env sh
+set -e
+
+LORA_NAME=${1:-"checkpoint-$(date +%s)"}
+
+shift
+
+EXTENSIONS="$@"
+FIND_EXTS=""
+
+if [ -n "$EXTENSIONS" ]; then
+  for ext in $EXTENSIONS; do
+    FIND_EXTS="$FIND_EXTS -o -iname '*.${ext}'"
+  done
+  FIND_EXTS="${FIND_EXTS# -o }"  # strip leading -o
+  FIND_EXTS="\( $FIND_EXTS \)"
+fi
+
+FIND_EXTS="-type f $FIND_EXTS"
+
+find /work $FIND_EXTS  | while read -r file; do
+  {
+    echo "=== $file ==="
+    cat "$file"
+    echo ""
+  } >> "/tmp/${LORA_NAME}-corpus.txt"
+done
+
+gelli-model "$MODEL"
+gelli-lora $LORAS
+
+exec llama-finetune \
+  --model-base "/models/$(basename "$MODEL").gguf" \
+  --train-data "/tmp/${LORA_NAME}-corpus.txt" \
+  --lora-out "/loras/${LORA_NAME}.gguf" \
+  --threads "${THREADS:-$(nproc)}" \
+  --adam-iter 1024
