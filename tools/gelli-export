@@ -22,15 +22,17 @@ case "$TYPE" in
     ;;
 esac
 
-FILE="$DIR/$NAME"
-case "$FILE" in
+case "$NAME" in
   *.gguf) ;;
-  *) FILE="$FILE.gguf" ;;
+  *) NAME="$NAME.gguf" ;;
 esac
 
+FILE="$DIR/$(basename "$NAME")"
+DEST="/work/$NAME"
+
 if [ ! -f "$FILE" ]; then
-  echo "$TYPE not found: $FILE" >&2
+  echo "$TYPE $NAME not found" >&2
   exit 1
 fi
 
-cat "$FILE"
+cp "$FILE" "$DEST"

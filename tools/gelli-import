@@ -22,6 +22,11 @@ case "$TYPE" in
     ;;
 esac
 
+case "$NAME" in
+  *.gguf) ;;
+  *) NAME="$NAME.gguf" ;;
+esac
+
 FILE="/work/$NAME"
 DEST="$DIR/$(basename "$NAME")"
 
@@ -30,4 +35,4 @@ if [ ! -f "$FILE" ]; then
   exit 1
 fi
 
-cp "$FILE" "$DEST"
+mv "$FILE" "$DEST"
