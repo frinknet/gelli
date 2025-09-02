@@ -1,40 +1,35 @@
 #!/bin/sh
 set -eu
-
 REPO="ghcr.io/frinknet/gelli"
 IMAGE="${REPO##*/}"
 PREFIX="${HOME}/bin"
 VER="${1:-latest}"
 
+# Create wrapper bin directory
 mkdir -p "$PREFIX"
-
 case ":$PATH:" in
   *:"$PREFIX":*) ;;
   *) printf '\nexport PATH="%s:$PATH"\n' "$PREFIX" >> "$HOME/.bashrc" || true ;;
 esac
 
-# Record old local alias ID (if any)
+# Pull and tag the image as before
 OLD_ID="$(docker image inspect -f '{{.Id}}' "$IMAGE:latest" 2>/dev/null || true)"
-
-# Pull new image
 if ! docker image pull "$REPO:$VER"; then
   echo "could not pull docker image $REPO:$VER" >&2
   exit 1
 fi
-
-# Retag to a stable local alias
 docker image tag "$REPO:$VER" "$IMAGE:latest"
-
-# Remove the previous image ID if it changed (skips if referenced)
 NEW_ID="$(docker image inspect -f '{{.Id}}' "$IMAGE:latest")"
 if [ -n "${OLD_ID:-}" ] && [ "$OLD_ID" != "$NEW_ID" ]; then
   docker image rm "$OLD_ID" >/dev/null 2>&1 || true
 fi
-
-# Opportunistic cleanup of danglers
 docker image prune -f >/dev/null 2>&1 || true
 
-# Create a shell wrapper
+# Ensure persistent Docker volumes exist
+docker volume inspect gelli-models >/dev/null 2>&1 || docker volume create gelli-models >/dev/null
+docker volume inspect gelli-loras >/dev/null 2>&1 || docker volume create gelli-loras >/dev/null
+
+# Wrapper script
 WRAP="$PREFIX/$IMAGE"
 cat > "$WRAP" <<EOF
 #!/bin/sh
@@ -47,16 +42,18 @@ if [ "\${1:-}" = "update" ]; then
   curl -fsSL "https://github.com/${REPO#*/}/raw/main/install.sh" -o "\$TMP"
   exec sh "\$TMP" "\$VERSION"
 else
-  exec docker run --rm -it \
-    -u "\$(id -u):\$(id -g)" \
-    -v "\$(pwd):/work" \
+  exec docker run --rm -it \\
+    -u "\$(id -u):\$(id -g)" \\
+    -v "\$(pwd):/work" \\
+    -v gelli-models:/models \\
+    -v gelli-loras:/loras \\
     "\$IMAGE" "\$@"
 fi
 EOF
 chmod +x "$WRAP"
-
 echo
 echo "✓ installed: $WRAP"
 echo
-#"$WRAP" version 
+"$WRAP" version 
 echo
+
