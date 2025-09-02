@@ -18,7 +18,7 @@ FROM alpine:latest
 
 # install ALL binaries (now includes finetune!)
 COPY --from=build /src/build/bin/llama* /usr/local/bin/
-COPY scripts/* /usr/local/bin/
+COPY tools/* /usr/local/bin/
 
 # make them executable
 RUN chmod +x /usr/local/bin/*; \
@@ -26,7 +26,7 @@ RUN chmod +x /usr/local/bin/*; \
 
 # overridable defaults
 ENV LORAS= \
-	MODEL=qwen2.5-0.5B \
+	MODEL=Qwen/Qwen2.5-0.5B-Instruct \
 	PORT=7771
 
 ARG VERSION

@@ -1,6 +1,10 @@
 #!/usr/bin/env sh
 set -e
 
+MODEL=${1:-${MODEL:-Qwen/Qwen2.5-0.5B-Instruct}}
+
+shift
+
 LORA_NAME=${1:-"checkpoint-$(date +%s)"}
 
 shift
@@ -27,7 +31,6 @@ find /work $FIND_EXTS  | while read -r file; do
 done
 
 gelli-model "$MODEL"
-gelli-lora $LORAS
 
 exec llama-finetune \
   --model-base "/models/$(basename "$MODEL").gguf" \

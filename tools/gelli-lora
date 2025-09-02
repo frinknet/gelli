@@ -1,0 +1,21 @@
+#!/usr/bin/env sh
+set -e
+
+LORAS=$@
+
+fetch() {
+  repo="$1"
+  dest="/loras/$(basename "$repo").gguf"
+  url="https://huggingface.co/$repo/resolve/main/lora.gguf"
+
+  if [ -f "$dest" ]; then
+    echo "✓ cached $dest"
+  else
+    echo "↓ $repo → $dest"
+    wget -qO "$dest" "$url"
+  fi
+}
+
+for l in $LORAS; do
+  fetch "$l"
+done

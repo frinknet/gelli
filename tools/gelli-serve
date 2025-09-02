@@ -17,4 +17,4 @@ if [ -n "$LORAS" ]; then
   for f in $LORAS; do FLAGS="$FLAGS --lora /lora/$f.gruf"; done
 fi
 
-exec llama-server --model "/models/$(basename "$MODEL").gguf" $FLAGS --port "$PORT" --ctx-size 131072
+exec llama-server --model "/models/$(basename "$MODEL").gguf" $FLAGS --port "$PORT" --ctx-size ${CTX_SIZE:-131072}

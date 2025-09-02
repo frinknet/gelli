@@ -1,12 +1,12 @@
 #!/usr/bin/env sh
 set -e
 
-LORAS=${*:-$LORAS}
+MODELS=$@
 
 fetch() {
   repo="$1"
-  dest="/loras/$(basename "$repo").gguf"
-  url="https://huggingface.co/$repo/resolve/main/lora.gguf"
+  dest="/models/$(basename "$repo").gguf"
+  url="https://huggingface.co/$repo/resolve/main/model.gguf"
 
   if [ -f "$dest" ]; then
     echo "✓ cached $dest"
@@ -16,6 +16,6 @@ fetch() {
   fi
 }
 
-for l in $LORAS; do
-  fetch "$l"
+for m in $MODELS; do
+  fetch "$m"
 done
