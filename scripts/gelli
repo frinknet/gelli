@@ -1,6 +1,10 @@
 #!/usr/bin/env sh
 set -e
 
+if  [ "$1" = "version" ]; then
+  exec echo /etc/VERSION
+fi
+
 CMD="/usr/local/bin/gelli-${1:-serve}"
 shift || true   # shift off sub-command if present
 

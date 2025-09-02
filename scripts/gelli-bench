@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+set -e
+
+MODEL="$1"
+
+if [ -z "$MODEL" ]; then
+    echo "Usage: gelli bench MODEL" >&2
+    exit 1
+fi
+
+gelli-model "$MODEL"
+
+echo "→ Benchmarking model: $MODEL"
+benchmark --model "/models/$MODEL.gguf"

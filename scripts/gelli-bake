@@ -1,0 +1,49 @@
+#!/usr/bin/env sh
+set -e
+
+MODEL=""
+LORAS=""
+OUTPUT=""
+
+for arg in "$@"; do
+  case "$arg" in
+    lora=*) LORAS="$LORAS ${arg#lora=}" ;;
+    *.gguf) OUTPUT="$arg" ;;
+    *) MODEL="$arg" ;;
+  esac
+done
+
+if [ -z "$MODEL" ] || [ -z "$OUTPUT" ] || [ -z "$LORAS" ]; then
+  echo "Usage: gelli bake MODEL lora=LORA:WEIGHT [lora=LORA2:WEIGHT] OUTPUT.gguf" >&2
+  exit 1
+fi
+
+gelli-model "$MODEL"
+
+if [ -n "$LORAS" ]; then
+    LORA_NAMES=""
+    for lora_spec in $LORAS; do
+        LORA_NAME="${lora_spec%%:*}"
+        LORA_NAMES="$LORA_NAMES $LORA_NAME"
+    done
+    gelli-lora $LORA_NAMES
+fi
+
+MODEL_FILE="/models/$MODEL.gguf"
+LORA_ARGS=""
+
+for lora_spec in $LORAS; do
+    if [[ "$lora_spec" == *":"* ]]; then
+        LORA_NAME="${lora_spec%%:*}"
+        WEIGHT="${lora_spec##*:}"
+        LORA_ARGS="$LORA_ARGS --lora-scaled /loras/$LORA_NAME.gguf $WEIGHT"
+    else
+        LORA_ARGS="$LORA_ARGS --lora-scaled /loras/$lora_spec.gguf 1.0"
+    fi
+done
+
+echo "→ Baking $LORAS into $MODEL_FILE"
+
+export-lora --model-base "$MODEL_FILE" --model-out "$OUTPUT" $LORA_ARGS
+
+echo "→ Output: $OUTPUT"

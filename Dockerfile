@@ -28,6 +28,9 @@ ENV LORAS= \
 	MODEL=/models/qwen2.5-0.5B.gguf \
 	PORT=7771
 
+ARG VERSION
+RUN test -n "$VERSION" && printf 'GELLI %s\n' "$VERSION" > /etc/VERSION
+
 # we're ready to go
 EXPOSE 7771
 WORKDIR /work

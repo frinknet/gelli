@@ -1,0 +1,57 @@
+#!/usr/bin/env sh
+set -e
+
+MODEL="$1"
+shift
+LORAS="$@"
+
+if [ -z "$MODEL" ]; then
+    echo "Usage: gelli test MODEL [LORA:WEIGHT LORA:WEIGHT ...]" >&2
+    exit 1
+fi
+
+gelli-model "$MODEL"
+
+if [ -n "$LORAS" ]; then
+    LORA_NAMES=""
+
+    for lora_spec in $LORAS; do
+        LORA_NAME="${lora_spec%%:*}" LORA_NAMES="$LORA_NAMES $LORA_NAME" done
+
+    gelli-lora $LORA_NAMES
+fi
+
+MODEL_FILE="/models/$MODEL.gguf"
+
+# Build LoRA arguments with weights
+LORA_ARGS=""
+for lora_spec in $LORAS; do
+    if [[ "$lora_spec" == *":"* ]]; then
+        LORA_NAME="${lora_spec%%:*}"
+        WEIGHT="${lora_spec##*:}"
+        LORA_ARGS="$LORA_ARGS --lora-scaled /loras/$LORA_NAME.gguf $WEIGHT"
+    else
+        LORA_ARGS="$LORA_ARGS --lora /loras/$lora_spec.gguf"
+    fi
+done
+
+TOTAL=0
+COUNT=0
+
+echo "Testing model: $MODEL_FILE"
+if [ -n "$LORA_ARGS" ]; then
+    echo "With LoRAs: $LORAS"
+fi
+
+find /work -type f | while read -r file; do
+    SCORE=$(llama-perplexity --model "$MODEL_FILE" $LORA_ARGS --file "$file" 2>/dev/null | tail -1)
+    printf "%.2f      %s\n" "$SCORE" "$file"
+    TOTAL=$(echo "$TOTAL + $SCORE" | bc -l)
+    COUNT=$((COUNT + 1))
+done
+
+if [ "$COUNT" -gt 0 ]; then
+    AVG=$(echo "scale=2; $TOTAL / $COUNT" | bc -l)
+    echo
+    printf "%.2f      TOTAL\n" "$AVG"
+fi

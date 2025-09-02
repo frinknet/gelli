@@ -1,0 +1,30 @@
+#!/usr/bin/env sh
+set -e
+
+MODEL="$1"
+SIZE="$2"
+
+case "$SIZE" in
+  xs) QFORMAT="q2_k" ;;     # Extra small
+  sm) QFORMAT="q4_k_m" ;;   # Small
+  md) QFORMAT="q5_k_m" ;;   # Medium
+  lg) QFORMAT="q8_0" ;;     # Large
+  xl) QFORMAT="f16" ;;      # Extra large (no quant)
+  *) echo "Unknown size: $SIZE" >&2; exit 1 ;; 
+esac
+
+gelli-model "$MODEL"
+
+MODEL_FILE="/models/$MODEL.gguf"
+OUTFILE="/models/${MODEL%.*}-$SIZE.gguf"
+
+if [ ! -f "$MODEL_FILE" ]; then
+    echo "Model not found: $MODEL_FILE" >&2
+    exit 1
+fi
+
+echo "→ Compressing $MODEL to $SIZE ($QFORMAT)"
+
+llama-quantize "$MODEL_FILE" "$OUTFILE" "$QFORMAT"
+
+echo "→ Output: $OUTFILE"

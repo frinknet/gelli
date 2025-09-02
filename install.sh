@@ -49,7 +49,7 @@ if [ "\${1:-}" = "update" ]; then
 else
   exec docker run --rm -it \
     -u "\$(id -u):\$(id -g)" \
-    -v "\$(pwd):/build" \
+    -v "\$(pwd):/work" \
     "\$IMAGE" "\$@"
 fi
 EOF
