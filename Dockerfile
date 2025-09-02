@@ -1,4 +1,4 @@
-# GELLI - Generic Entrypoint for Llama & LoRA Interaction
+# GELLI - Generic Entrypoint for Llama LoRA Interaction
 FROM alpine:latest AS build
 
 # get the basic build-deps
