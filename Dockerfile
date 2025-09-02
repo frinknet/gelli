@@ -8,6 +8,8 @@ WORKDIR /src
 
 # build ALL binaries (including finetune from examples)
 RUN git clone --depth 1 "https://github.com/ggml-org/llama.cpp" .
+RUN find . -type f -name "*.cpp" -exec sed -i 's/<linux\/limits.h>/<limits.h>/g' {} +
+RUN find . -type f -name "*.c"	 -exec sed -i 's/<linux\/limits.h>/<limits.h>/g' {} +
 RUN cmake -B build -DCMAKE_BUILD_TYPE=Release
 RUN cmake --build build --config Release -j$(nproc)
 RUN mv build/finetune build/llama-finetune
