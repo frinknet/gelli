@@ -37,6 +37,12 @@ fetch_hf() {                    #  $1 = user/repo  $2 = quant  $3 = file
   echo "$out"
 }
 
+if [ "$1" = "list" ]; then
+  cd /models
+  ls
+  exit 0
+fi
+
 for arg in "$@"; do
   case "$arg" in
     ol:*)

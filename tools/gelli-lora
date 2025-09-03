@@ -17,6 +17,12 @@ fetch() {
   fi
 }
 
+if [ "$1" = "list" ]; then
+  cd /loras
+  ls
+  exit 0
+fi
+
 for l in $LORAS; do
   fetch "$l"
 done
