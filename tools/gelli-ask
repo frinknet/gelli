@@ -1,0 +1,43 @@
+#!/usr/bin/env sh
+set -e
+
+MODEL=${1:-${GELLI_MODEL:-ol:qwen:0.6b}}
+LORAS=${1:-${GELLI_LORAS:-}}
+CONTEXT=${GELLI_CONTEXT:-131072}
+
+shift || true
+
+LORAS=""
+FLAGS=""
+PROMPT=""
+
+while [ $# -gt 0 ]; do
+  case $1 in
+    --)
+      shift
+      PROMPT="$*"
+      break
+      ;;
+    *)
+      if [ -z "$MODEL" ]; then
+        MODEL="$1"
+      else
+        LORAS="$LORAS $1"
+      fi
+      ;;
+  esac
+  shift
+done
+
+if [ ! -t 0 ]; then
+  PROMPT="$PROMPT\n\n$(cat)"
+fi
+
+MODEL=$(gelli-model $MODEL)
+LORAS=$(gelli-lora $LORAS)
+
+if [ -n "$LORAS" ]; then
+  for f in $LORAS; do FLAGS="$FLAGS --lora /loras/$f.gguf"; done
+fi
+
+exec llama-cli --model "/models/$(basename "$MODEL").gguf" $FLAGS --ctx-size $CONTEXT --prompt "$PROMPT" --temp 0.1 --silent --no-display-prompt
