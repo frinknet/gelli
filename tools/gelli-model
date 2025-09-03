@@ -11,8 +11,6 @@ parse_ol() {
 
   [ -f "$dest" ] && { echo "$out"; return; }
 
-  echo "↓ ol:$slug:$tag → $out" >&2
-
   manifest="https://registry.ollama.ai/v2/library/${slug}/manifests/${tag}"
   digest=$(wget -qO- "$manifest" | jq -r '.layers[0].digest')
   url="https://registry.ollama.ai/v2/library/${slug}/blobs/$digest"
@@ -30,8 +28,6 @@ parse_hf() {
 
   [ -f "$dest" ] && { echo "$out"; return; }
 
-  echo "↓ hf:$repo:$quant:$file → $out" >&2
-
   url="https://huggingface.co/$repo/resolve/main/$file.gguf"
 
   echo "$dest" "$url"
@@ -48,22 +44,19 @@ parse() {
 fetch() {
   dest="$1"
   url="$2"
-  arg="$3"
 
-  [ -f "$dest" ] || wget -qO "$dest" "$url"
+  [ -f "$dest" ] || echo wget -qO "$dest" "$url"
 
   if [ -f "$dest" ]; then
     basename "${dest%.*}"
   else
-    echo "MODEL MISSING → $arg" >&2
-
-    exit 1
+    return 1
   fi
 }
 
 download() {
   for arg in "$@"; do
-    fetch $(parse "$arg") "$arg"
+    fetch $(parse "$arg") || error MISSING $arg
   done
 }
 
@@ -83,8 +76,13 @@ delete() {
   for arg in "$@"; do
     file=$(parse "$arg")
 
-    rm "$file"
+    rm "$file" || error FAILED TO REMOVE $arg
   done
+}
+
+error() {
+  echo $@ >&2
+  exit 1
 }
 
 case "$1" in
