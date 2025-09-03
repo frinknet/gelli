@@ -44,7 +44,6 @@ if [ "\${1:-}" = "update" ]; then
   exec sh "\$TMP" "\$VERSION"
 else
   exec docker run --rm -i \\
-    -u "\$(id -u):\$(id -g)" \\
     -v "\$(pwd):/work" \\
     -v gelli-models:/models \\
     -v gelli-loras:/loras \\

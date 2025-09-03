@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -e
 
-MODEL=${1:-${GELLI_MODEL:-Qwen/Qwen2.5-0.5B-Instruct}}
+MODEL=${1:-${GELLI_MODEL:-ol:qwen:0.6b}}
 shift || true
 LORAS=${*:-${GELLI_LORAS:-}}
 PORT=${GELLI_PORT:-7771}

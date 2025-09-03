@@ -30,7 +30,7 @@ RUN chmod +x /usr/local/bin/*; \
 # overridable defaults
 ENV GELLI_PORT=7771 \
 	GELLI_CONTEXT= \
-	GELLI_MODEL=Qwen/Qwen2.5-0.5B-Instruct \
+	GELLI_MODEL=ol:qwen3:0.6b \
 	GELLI_LORAS=
 
 ARG VERSION

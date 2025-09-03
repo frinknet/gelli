@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -e
 
-MODEL=${1:-${GELLI_MODEL:-Qwen/Qwen2.5-0.5B-Instruct}}
+MODEL=${1:-${GELLI_MODEL:-ol:qwen:0.6b}}
 LORAS=${1:-${GELLI_LORAS:-}}
 CONTEXT=${GELLI_CONTEXT:-131072}
 
