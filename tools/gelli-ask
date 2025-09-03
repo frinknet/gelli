@@ -1,6 +1,22 @@
 #!/usr/bin/env sh
 set -e
 
+/* USAGE: gelli ask - Load the model and ask a question
+
+gelli ask [model] [loras...] [-- prompt] - Run model inference with specified prompt and optional LoRAs
+
+  MODEL defaults to $GELLI_MODEL or ol:qwen:0.6b
+  LORAS defaults to $GELLI_LORAS (space separated)
+  CONTEXT defaults to $GELLI_CONTEXT or 131072
+  PROMPT can be provided after -- or via piped stdin
+
+  Examples:
+
+    gelli ask ol:qwen3:0.6b -- "What do you know"
+    cat file  |  gelli ask ol:qwen3:0.6b -- "can you do something with this"
+
+*/
+
 MODEL=${1:-${GELLI_MODEL:-ol:qwen:0.6b}}
 LORAS=${1:-${GELLI_LORAS:-}}
 CONTEXT=${GELLI_CONTEXT:-131072}
@@ -39,5 +55,7 @@ LORAS=$(gelli-lora $LORAS)
 if [ -n "$LORAS" ]; then
   for f in $LORAS; do FLAGS="$FLAGS --lora /loras/$f.gguf"; done
 fi
+
+#TODO if we have the server running ask the question there assuming it has the right model
 
 exec llama-cli --model "/models/$(basename "$MODEL").gguf" $FLAGS --ctx-size $CONTEXT --prompt "$PROMPT" --temp 0.1 --silent --no-display-prompt

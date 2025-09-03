@@ -1,17 +1,18 @@
 #!/usr/bin/env sh
 set -e
 
+error() {
+  echo $@ >&2
+
+  exit 1
+}
+
 if  [ "$1" = "version" ]; then
   exec cat /etc/VERSION
 fi
 
-CMD="/usr/local/bin/gelli-${1:-serve}"
-shift || true   # shift off sub-command if present
+CMD="/usr/local/bin/gelli-${1:-help}"
 
-if [ -f "$CMD" ]; then
-  exec "$CMD" "$@"
-else
-  #TODO more sustainable help
-  echo "gelli: unknown command \"$CMD\"" >&2
-  exit 1
-fi
+shift || true
+
+[ -f "$CMD" ] && exec "$CMD" "$@" || error UNKNOWN COMMAND: $1 >&2

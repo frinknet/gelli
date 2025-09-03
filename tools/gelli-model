@@ -1,6 +1,21 @@
 #!/usr/bin/env sh
 set -e
 
+/* USAGE: gelli model - Manage Models
+
+gelli model list [model]     - Lists  models
+gelli model import [model]   - Import models
+gelli model export [model]   - Export models
+gelli model delete [model]   - Delete models
+gelli model download [model] - Downloads models
+
+  Use ol:model:tag for Ollama model.
+  Use hf:repo:quant:file for HuggingFace models.
+
+  Only works with .gguf files
+
+*/
+
 parse_ol() {
   spec=${1#ol:}
   slug=$(printf '%s\n' "$spec" | cut -d: -f1)
@@ -58,6 +73,32 @@ download() {
   done
 }
 
+outfile() {
+  src="$1"
+  dest="/work/$(basename "$1")"
+
+  mv "$src" "$dest" 
+}
+
+export() {
+  for arg in "$@"; do
+    outfile $(parse "$arg") || error MISSING $arg
+  done
+}
+
+infile() {
+  src="$1"
+  dest="/models/$(basename "$1")"
+
+  mv "$src" "$dest" 
+}
+
+import() {
+  for arg in "$@"; do
+    infile $(parse "$arg") || error MISSING $arg
+  done
+}
+
 list() {
   glob="${1:-*}"
 
@@ -85,7 +126,11 @@ error() {
 }
 
 case "$1" in
+  "") exec gelli-help model;;
   list) list "${@:2}";;
   delete) delete "${@:2}";;
+  download) download "$@";;
+  import) import "$@";;
+  export) export "$@";;
   *) download "$@";;
 esac
