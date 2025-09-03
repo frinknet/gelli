@@ -1,0 +1,26 @@
+#!/usr/bin/env sh
+set -e
+
+# USAGE: gelli help - show help for gelli commands
+#
+# gelli help       - List all available commands with brief descriptions
+# gelli help [cmd] - Show detailed usage for specific command
+#
+#   Commands are discovered automatically from gelli-* scripts
+#   Each command must have a USAGE comment block for documentation
+
+error() {
+  echo "$@" >&2
+
+  exit 1
+}
+
+DIR=$(dirname "$0")
+CMD="$DIR/gelli-$1"
+
+if [ -n "$1" ]; then
+  [ -f "$CMD" ] && sed -nE '/\/\* USAGE:/,/\*\// { /\/\* USAGE:/b; /\*\//b; p }' "$CMD" || error "Command not found: $1"
+else
+  grep -hP '(?<=\/\* USAGE: ).*' $DIR/gelli-* 2>/dev/null | sort
+fi
+
