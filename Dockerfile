@@ -1,4 +1,4 @@
-# GELLI - General Edge Local Llama Interface
+# GELLI - General Edge Local Llama Instances
 FROM alpine:latest AS build
 RUN apk add --no-cache build-base cmake git bash curl-dev
 
