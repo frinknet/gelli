@@ -60,4 +60,3 @@ echo "✓ installed: $WRAP"
 echo
 "$WRAP" version 
 echo
-
