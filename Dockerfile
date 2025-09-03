@@ -18,6 +18,9 @@ RUN cmake --build build --config Release -j$(nproc)
 # Add gelli tools
 COPY tools/* /src/build/bin/
 
+# Update library cache and permissions
+RUN chmod +x /src/local/bin/*
+
 # Final lean stage
 FROM alpine:latest
 RUN apk add --no-cache jq && \
@@ -32,10 +35,6 @@ COPY --from=build /src/build/bin/gelli* /src/build/bin/llama* /usr/local/bin/
 
 # Copy ALL shared libraries in one layer  
 COPY --from=build /src/build/bin/*.so /usr/local/lib/
-
-# Update library cache and permissions
-RUN chmod +x /usr/local/bin/* && \
-    echo "/usr/local/lib" > /etc/ld-musl-x86_64.path
 
 # Set defaults environment
 ENV GELLI_PORT=7771 \
