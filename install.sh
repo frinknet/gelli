@@ -48,7 +48,7 @@ else
     -v "\$(pwd):/work" \\
     -v gelli-models:/models \\
     -v gelli-loras:/loras \\
-    -e GELLI_CTXSIZE \\
+    -e GELLI_CONTEXT \\
     -e GELLI_MODEL \\
     -e GELLI_LORAS \\
     -e GELLI_PORT \\

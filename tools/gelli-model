@@ -2,9 +2,10 @@
 set -e
 
 fetch_ollama() {                #  $1 = slug   $2 = tag|latest
-  slug="$1"; tag="${2:-latest}"
+  slug="$1"
+  tag="${2:-latest}"
   out=$(echo "$slug:$tag" | sed 's#[:/\\]#-#g')
-  dest="/models/$safe.gguf"
+  dest="/models/$out.gguf"
 
   [ -f "$out" ] && { echo "$out"; return; }
 
@@ -19,7 +20,9 @@ fetch_ollama() {                #  $1 = slug   $2 = tag|latest
 }
 
 fetch_hf() {                    #  $1 = user/repo  $2 = quant  $3 = file
-  repo="$1"; quant="$2"; file="$3"
+  repo="$1"
+  quant="$2"
+  file="$3"
   out=$(echo "${repo}-${quant}-${file}" | sed 's#[:/\\]#-#g')
   dest="/models/$out.gguf"
 
@@ -29,7 +32,7 @@ fetch_hf() {                    #  $1 = user/repo  $2 = quant  $3 = file
 
   url="https://huggingface.co/$repo/resolve/main/$file.gguf"
 
-  wget -qO "$dest" "$url"
+  echo wget -qO "$dest" "$url"
 
   echo "$out"
 }
