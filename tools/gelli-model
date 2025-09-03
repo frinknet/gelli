@@ -12,6 +12,9 @@ parse_ol() {
   [ -f "$dest" ] && { echo "$out"; return; }
 
   manifest="https://registry.ollama.ai/v2/library/${slug}/manifests/${tag}"
+
+  wget -qO- --method=HEAD "$manifest" || error FAILED MANIFEST $manifest
+
   digest=$(wget -qO- "$manifest" | jq -r '.layers[0].digest')
   url="https://registry.ollama.ai/v2/library/${slug}/blobs/$digest"
 
@@ -45,13 +48,8 @@ fetch() {
   dest="$1"
   url="$2"
 
-  [ -f "$dest" ] || echo wget -qO "$dest" "$url"
-
-  if [ -f "$dest" ]; then
-    basename "${dest%.*}"
-  else
-    return 1
-  fi
+  [ -f "$dest" ] || wget -qO "$dest" "$url" || error FAILED FETCH $url
+  [ -f "$dest" ] && basename "${dest%.*}"
 }
 
 download() {
@@ -82,6 +80,7 @@ delete() {
 
 error() {
   echo $@ >&2
+
   exit 1
 }
 

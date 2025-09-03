@@ -28,22 +28,14 @@ parse() {
 fetch() {
   dest="$1"
   url="$2"
-  arg="$3"
 
-  [ -f "$dest" ] || wget -qO "$dest" "$url"
-
-  if [ -f "$dest" ]; then
-    basename "${dest%.*}"
-  else
-    echo "LORA MISSING → $arg" >&2
-
-    exit 1
-  fi
+  [ -f "$dest" ] || wget -qO "$dest" "$url" || error FAILED FETCH $url
+  [ -f "$dest" ] && basename "${dest%.*}"
 }
 
 download() {
   for arg in "$@"; do
-    fetch $(parse "$arg") "$arg"
+    fetch $(parse "$arg") || error MISSING $arg
   done
 }
 
@@ -55,8 +47,6 @@ list() {
   for f in $glob; do
     [ -f "$f" ] && printf '%s\n' "${f%.*}"
   done
-
-  exit 0
 }
 
 delete() {
@@ -65,6 +55,12 @@ delete() {
 
     rm "$file"
   done
+}
+
+error() {
+  echo $@ >&2
+
+  exit 1
 }
 
 case "$1" in
