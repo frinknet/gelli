@@ -16,6 +16,9 @@ RUN cmake --build build --config Release -j$(nproc)
 # new container to keep it lean 
 FROM alpine:latest
 
+# get the basic build-deps
+RUN apk add --no-cache jq
+
 # install ALL binaries (now includes finetune!)
 COPY --from=build /src/build/bin/llama* /usr/local/bin/
 COPY tools/* /usr/local/bin/
