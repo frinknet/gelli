@@ -1,20 +1,18 @@
 #!/usr/bin/env sh
 set -e
 
-/* USAGE: gelli model - Manage Models
-
-gelli model list [model]     - Lists  models
-gelli model import [model]   - Import models
-gelli model export [model]   - Export models
-gelli model delete [model]   - Delete models
-gelli model download [model] - Downloads models
-
-  Use ol:model:tag for Ollama model.
-  Use hf:repo:quant:file for HuggingFace models.
-
-  Only works with .gguf files
-
-*/
+# USAGE: gelli model - Manage Models
+# 
+# gelli model list [model]     - Lists  models
+# gelli model import [model]   - Import models
+# gelli model export [model]   - Export models
+# gelli model delete [model]   - Delete models
+# gelli model download [model] - Downloads models
+# 
+#   Use ol:model:tag for Ollama model.
+#   Use hf:repo:quant:file for HuggingFace models.
+# 
+#   Only works with .gguf files
 
 parse_ol() {
   spec=${1#ol:}

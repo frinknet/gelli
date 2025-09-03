@@ -1,19 +1,17 @@
 #!/usr/bin/env sh
 set -e
 
-/* USAGE: gelli lora - Manage LoRAs
-
-gelli lora list [lora]     - Lists  LoRAs
-gelli lora import [lora]   - Import LoRAs
-gelli lora export [lora]   - Export LoRAs
-gelli lora delete [lora]   - Delete LoRAs
-gelli lora download [lora] - Downloads LoRAs
-
-  Use hf:repo:file for HuggingFace LoRAs.
-
-  Only works with .gguf files
-
-*/
+# USAGE: gelli lora - Manage LoRAs
+# 
+# gelli lora list [lora]     - Lists  LoRAs
+# gelli lora import [lora]   - Import LoRAs
+# gelli lora export [lora]   - Export LoRAs
+# gelli lora delete [lora]   - Delete LoRAs
+# gelli lora download [lora] - Downloads LoRAs
+# 
+#   Use hf:repo:file for HuggingFace LoRAs.
+# 
+#   Only works with .gguf files
 
 parse_hf() {
   spec=${1#hf:}
