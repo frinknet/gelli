@@ -13,13 +13,13 @@ case ":$PATH:" in
 esac
 
 # Pull and tag the image as before
-OLD_ID="$(docker image inspect -f '{{.Id}}' "$IMAGE:latest" 2>/dev/null || true)"
+OLD_ID="$(docker image inspect -f '{{.Id}}' "$IMAGE:$VER" 2>/dev/null || true)"
 if ! docker image pull "$REPO:$VER"; then
   echo "could not pull docker image $REPO:$VER" >&2
   exit 1
 fi
-docker image tag "$REPO:$VER" "$IMAGE:latest"
-NEW_ID="$(docker image inspect -f '{{.Id}}' "$IMAGE:latest")"
+docker image tag "$REPO:$VER" "$IMAGE:$VER"
+NEW_ID="$(docker image inspect -f '{{.Id}}' "$IMAGE:$VER")"
 if [ -n "${OLD_ID:-}" ] && [ "$OLD_ID" != "$NEW_ID" ]; then
   docker image rm "$OLD_ID" >/dev/null 2>&1 || true
 fi
@@ -35,7 +35,7 @@ cat > "$WRAP" <<EOF
 #!/bin/sh
 set -eu
 
-IMAGE="$IMAGE:latest"
+IMAGE="$IMAGE:$VER"
 VERSION="$VER"
 if [ "\${1:-}" = "update" ]; then
   TMP="\$(mktemp)"
