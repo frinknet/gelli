@@ -31,11 +31,7 @@ RUN test -n "$VERSION" && printf 'GELLI %s\n' "$VERSION" > /etc/VERSION
 COPY --from=build /src/build/bin/gelli* /src/build/bin/llama* /usr/local/bin/
 
 # Copy ALL shared libraries in one layer  
-COPY --from=build /src/build/bin/*.so \
-		  /usr/lib/libstdc++.so* \
-		  /lib/libgcc_s.so* \
-		  /usr/lib/libcurl.so* \
-		  /usr/local/lib/
+COPY --from=build /src/build/bin/*.so /usr/local/lib/
 
 # Update library cache and permissions
 RUN chmod +x /usr/local/bin/* && \
