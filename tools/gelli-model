@@ -7,7 +7,7 @@ fetch_ollama() {                #  $1 = slug   $2 = tag|latest
   out=$(echo "$slug:$tag" | sed 's#[:/\\]#-#g')
   dest="/models/$out.gguf"
 
-  [ -f "$out" ] && { echo "$out"; return; }
+  [ -f "$dest" ] && { echo "$out"; return; }
 
   echo "↓ ol:$slug:$tag → $out" >&2
 
@@ -38,8 +38,11 @@ fetch_hf() {                    #  $1 = user/repo  $2 = quant  $3 = file
 }
 
 if [ "$1" = "list" ]; then
+  shopt -s nullglob 
   cd /models
-  ls
+  for f in *; do
+    printf '%s\n' "${f%.*}"
+  done
   exit 0
 fi
 

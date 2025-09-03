@@ -4,25 +4,30 @@ set -e
 LORAS=$@
 
 fetch() {
-  repo="$1"
-  dest="/loras/$(basename "$repo").gguf"
-  url="https://huggingface.co/$repo/resolve/main/lora.gguf"
+	repo="$1"
+	dest="/loras/$(basename "$repo").gguf"
+	url="https://huggingface.co/$repo/resolve/main/lora.gguf"
 
-  if [ -f "$dest" ]; then
-    echo "✓ cached $dest"
-  else
-    echo "↓ $repo → $dest"
+	if [ -f "$dest" ]; then
+		echo "✓ cached $dest"
+	else
+		echo "↓ $repo → $dest"
 
-    wget -qO "$dest" "$url"
-  fi
+		wget -qO "$dest" "$url"
+	fi
 }
 
 if [ "$1" = "list" ]; then
-  cd /loras
-  ls
-  exit 0
+	shopt -s nullglob 
+	cd /models
+	for f in *; do
+		printf '%s\n' "${f%.*}"
+	done
+	exit 0
 fi
 
+
+
 for l in $LORAS; do
-  fetch "$l"
+	fetch "$l"
 done

@@ -37,7 +37,7 @@ MODEL=$(gelli-model $MODEL)
 LORAS=$(gelli-lora $LORAS)
 
 if [ -n "$LORAS" ]; then
-  for f in $LORAS; do FLAGS="$FLAGS --lora $f"; done
+  for f in $LORAS; do FLAGS="$FLAGS --lora /loras/$f.gguf"; done
 fi
 
 exec llama-cli --model "/models/$(basename "$MODEL").gguf" $FLAGS --ctx-size $CONTEXT --prompt "$PROMPT" --temp 0.1 --silent --no-display-prompt
