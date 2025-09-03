@@ -1,10 +1,12 @@
 #!/usr/bin/env sh
 set -e
 
-fetch_ollama() {                #  $1 = slug   $2 = tag|latest
-  slug="$1"
-  tag="${2:-latest}"
-  out=$(echo "$slug:$tag" | sed 's#[:/\\]#-#g')
+parse_ol() {
+  spec=${1#ol:}
+  slug=$(printf '%s\n' "$spec" | cut -d: -f1)
+  tag=$(printf '%s\n' "$spec" | cut -s -d: -f2)
+  tag="${tag:-latest}"
+  out=$(echo "$slug:$tag" | sed 's#[:/\]#-#g')
   dest="/models/$out.gguf"
 
   [ -f "$dest" ] && { echo "$out"; return; }
@@ -13,17 +15,17 @@ fetch_ollama() {                #  $1 = slug   $2 = tag|latest
 
   manifest="https://registry.ollama.ai/v2/library/${slug}/manifests/${tag}"
   digest=$(wget -qO- "$manifest" | jq -r '.layers[0].digest')
+  url="https://registry.ollama.ai/v2/library/${slug}/blobs/$digest"
 
-  wget -qO "$dest" "https://registry.ollama.ai/v2/library/${slug}/blobs/$digest"
-
-  echo "$out"
+  echo "$dest" "$url"
 }
 
-fetch_hf() {                    #  $1 = user/repo  $2 = quant  $3 = file
-  repo="$1"
-  quant="$2"
-  file="$3"
-  out=$(echo "${repo}-${quant}-${file}" | sed 's#[:/\\]#-#g')
+parse_hf() {
+  spec=${1#hf:}
+  repo=$(printf '%s\n' "$spec" | cut -d: -f1)
+  quant=$(printf '%s\n' "$spec" | cut -s -d: -f2)
+  file=$(printf '%s\n' "$spec" | cut -s -d: -f3)
+  out=$(echo "${repo}-${quant}-${file}" | sed 's#[:/\]#-#g')
   dest="/models/$out.gguf"
 
   [ -f "$dest" ] && { echo "$out"; return; }
@@ -32,43 +34,61 @@ fetch_hf() {                    #  $1 = user/repo  $2 = quant  $3 = file
 
   url="https://huggingface.co/$repo/resolve/main/$file.gguf"
 
-  echo wget -qO "$dest" "$url"
-
-  echo "$out"
+  echo "$dest" "$url"
 }
 
-if [ "$1" = "list" ]; then
-  shopt -s nullglob 
-  cd /models
-  for f in *; do
-    printf '%s\n' "${f%.*}"
-  done
-  exit 0
-fi
-
-for arg in "$@"; do
-  case "$arg" in
-    ol:*)
-      spec=${arg#ol:}
-      slug=$(printf '%s\n' "$spec" | cut -d: -f1)
-      tag=$(printf '%s\n' "$spec" | cut -s -d: -f2)
-      fetch_ollama "$slug" "$tag"
-      ;;
-    hf:*)
-      spec=${arg#hf:}
-      repo=$(printf '%s\n' "$spec" | cut -d: -f1)
-      quant=$(printf '%s\n' "$spec" | cut -s -d: -f2)
-      file=$(printf '%s\n' "$spec" | cut -s -d: -f3)
-      fetch_hf "$repo" "$quant" "$file"
-      ;;
-    *)
-      file="/models/$(basename "$arg").gguf"
-      if [ -f "$file" ]; then
-        echo "$arg"
-      else
-        echo "MODEL MISSING → $arg" >&2
-        exit 1
-      fi
-      ;;
+parse() {
+  case "$1" in
+    ol:*) parse_ol "$1";;
+    hf:*) parse_hf "$1";;
+    *) echo "/models/$(basename "$1").gguf";;
   esac
-done
+}
+
+fetch() {
+  dest="$1"
+  url="$2"
+  arg="$3"
+
+  [ -f "$dest" ] || wget -qO "$dest" "$url"
+
+  if [ -f "$dest" ]; then
+    basename "${dest%.*}"
+  else
+    echo "MODEL MISSING → $arg" >&2
+
+    exit 1
+  fi
+}
+
+download() {
+  for arg in "$@"; do
+    fetch $(parse "$arg") "$arg"
+  done
+}
+
+list() {
+  glob="${1:-*}"
+
+  cd /models
+
+  for f in $glob; do
+    [ -f "$f" ] && printf '%s\n' "${f%.*}"
+  done
+
+  exit 0
+}
+
+delete() {
+  for arg in "$@"; do
+    file=$(parse "$arg")
+
+    rm "$file"
+  done
+}
+
+case "$1" in
+  list) list "${@:2}";;
+  delete) delete "${@:2}";;
+  *) download "$@";;
+esac
