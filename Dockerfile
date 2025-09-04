@@ -28,7 +28,7 @@ RUN apk add --no-cache jq vim git && \
 ARG VERSION
 RUN test -n "$VERSION" && printf 'GELLI %s\n' "$VERSION" > /etc/VERSION
 RUN echo "trap echo DEBUG"	>> /root/.profile && \
-    echo 'export PS1="\n\[\e[1;91m\]  \w \[\e[38;5;52m\]\$\[\e[0m\] \[\e]12;#999900\007\]\[\e]12;#999900\007\]\[\e[3 q\]"' >> /root/.bashrc
+    echo 'export PS1="\n\[\e[1;91m\]  \w \[\e[38;5;52m\]\$\[\e[0m\] \[\e]12;#999900\007\]\[\e]12;#999900\007\]\[\e[3 q\]"' >> /root/.profile
 
 # Copy ALL binaries in one layer
 COPY --from=build /src/build/bin/gelli* /src/build/bin/llama* /usr/local/bin/
