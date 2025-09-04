@@ -41,7 +41,9 @@ set -eu
 
 IMAGE="$IMAGE"
 VERSION="$VER"
-if [ "\${1:-}" = "update" ]; then
+
+case "\${1:-}" in
+update)
   TMP="\$(mktemp)"
 
   trap 'rm -f "\$TMP"' EXIT
@@ -49,7 +51,21 @@ if [ "\${1:-}" = "update" ]; then
   curl -fsSL "https://github.com/${REPO#*/}/raw/main/install.sh" -o "\$TMP"
 
   exec sh "\$TMP" "\$VERSION"
-else
+
+  ;;
+shell)
+  exec docker run -it --entrypoint sh \\
+    -v "\$(pwd):/work" \\
+    -v gelli-models:/models \\
+    -v gelli-loras:/loras \\
+    -v ~/.vimrc:/root/.vimrc \\
+    -e GELLI_CONTEXT \\
+    -e GELLI_MODEL \\
+    -e GELLI_LORAS \\
+    -e GELLI_PORT \\
+    "\$IMAGE"
+  ;;
+*)
   exec docker run --rm -i \\
     -v "\$(pwd):/work" \\
     -v gelli-models:/models \\
@@ -59,7 +75,8 @@ else
     -e GELLI_LORAS \\
     -e GELLI_PORT \\
     "\$IMAGE" "\$@"
-fi
+  ;;
+esac
 EOF
 
 chmod +x "$WRAP"

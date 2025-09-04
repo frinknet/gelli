@@ -21,12 +21,14 @@ RUN chmod +x /src/build/bin/*
 
 # Final lean stage
 FROM alpine:latest
-RUN apk add --no-cache jq && \
+RUN apk add --no-cache jq vim && \
     mkdir -p /models /loras /work /usr/local/lib
 
 # Set version
 ARG VERSION
 RUN test -n "$VERSION" && printf 'GELLI %s\n' "$VERSION" > /etc/VERSION
+RUN echo "trap echo DEBUG"	>> /root/.bashrc && \
+    echo 'export PS1="\n\[\e[1;91m\]  \w \[\e[38;5;52m\]\$\[\e[0m\] \[\e]12;#999900\007\]\[\e]12;#999900\007\]\[\e[3 q\]"' >> /root/.bashrc
 
 # Copy ALL binaries in one layer
 COPY --from=build /src/build/bin/gelli* /src/build/bin/llama* /usr/local/bin/
