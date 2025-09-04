@@ -27,8 +27,7 @@ RUN apk add --no-cache jq vim git && \
 # Set version
 ARG VERSION
 RUN test -n "$VERSION" && printf 'GELLI %s\n' "$VERSION" > /etc/VERSION
-RUN echo "trap echo DEBUG"	>> /root/.profile && \
-    echo 'export PS1="\n\[\e[1;91m\]  \w \[\e[38;5;52m\]\$\[\e[0m\] \[\e]12;#999900\007\]\[\e]12;#999900\007\]\[\e[3 q\]"' >> /root/.profile
+RUN echo 'export PS1="\n\[\e[1;91m\]  \w \[\e[38;5;52m\]\$\[\e[0m\] \[\e]12;#999900\007\]\[\e]12;#999900\007\]\[\e[3 q\]"' > /.env
 
 # Copy ALL binaries in one layer
 COPY --from=build /src/build/bin/gelli* /src/build/bin/llama* /usr/local/bin/
@@ -37,7 +36,8 @@ COPY --from=build /src/build/bin/gelli* /src/build/bin/llama* /usr/local/bin/
 COPY --from=build /src/build/bin/*.so /usr/local/lib/
 
 # Set defaults environment
-ENV GELLI_PORT=7771 \
+ENV ENV=/.env \
+    GELLI_PORT=7771 \
     GELLI_CONTEXT= \
     GELLI_MODEL=ol:qwen3:0.6b \
     GELLI_LORAS=

@@ -63,6 +63,7 @@ shell)
     -e GELLI_MODEL \\
     -e GELLI_LORAS \\
     -e GELLI_PORT \\
+    -e ENV="/root/.profile" \\
     "\$IMAGE"
   ;;
 *)
