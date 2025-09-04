@@ -18,12 +18,9 @@ parse_hf() {
   repo=$(printf '%s\n' "$spec" | cut -d: -f1)
   file=$(printf '%s\n' "$spec" | cut -s -d: -f2)
   file="${file:-adapter_model.gguf}"
-  out=$(echo "${repo}-${file}" | sed 's#[:/\]#-#g')
-  dest="/loras/$out"
+  dest="/loras/$(echo "${repo//\//-}-${file}" | sed 's#[:/\]#-#g')a"
 
-  [ -f "$dest" ] && { echo "${out%.*}"; return; }
-
-  echo "↓ hf:$repo:$file → ${out%.*}" >&2
+  [ -f "$dest" ] && { echo "$dest"; return; }
 
   url="https://huggingface.co/$repo/resolve/main/$file"
 
@@ -33,7 +30,7 @@ parse_hf() {
 parse() {
   case "$1" in
     hf:*) parse_hf "$1" ;;
-    *) echo "/loras/$(basename "$1").safetensors" ;;
+    *) echo "/loras/${1##*/}.sgguf" ;;
   esac
 }
 
@@ -41,19 +38,19 @@ fetch() {
   dest="$1"
   url="$2"
 
-  [ -f "$dest" ] || wget -qO "$dest" "$url" || error FAILED FETCH $url
+  [ -f "$dest" ] || curn -s "$url"  > "$dest" || error FAILED LORA FETCH $url
   [ -f "$dest" ] && basename "${dest%.*}"
 }
 
 download() {
-  for arg in "$@"; do
+  for arg in "${@:-}"; do
     fetch $(parse "$arg") || error MISSING $arg
   done
 }
 
 outfile() {
   src="$1"
-  dest="/work/$(basename "$1")"
+  dest="/work/${1##*/}"
 
   mv "$src" "$dest" 
 }
@@ -66,7 +63,7 @@ export() {
 
 infile() {
   src="$1"
-  dest="/models/$(basename "$1")"
+  dest="/models/${1##*/}"
 
   mv "$src" "$dest" 
 }
@@ -91,7 +88,7 @@ delete() {
   for arg in "$@"; do
     file=$(parse "$arg")
 
-    rm "$file"
+    rm "$file" || error FAILED TO REMOVE $arg
   done
 }
 
@@ -103,8 +100,8 @@ error() {
 
 case "$1" in
   "") exec gelli-help lora;;
-  list) list "${@:2}";;
-  delete) delete "${@:2}";;
+  list) shift; list "$@";;
+  delete) shift; delete "$@";;
   download) download "$@";;
   import) import "$@";;
   export) export "$@";;

@@ -21,7 +21,7 @@ RUN chmod +x /src/build/bin/*
 
 # Final lean stage
 FROM alpine:latest
-RUN apk add --no-cache jq vim git && \
+RUN apk add --no-cache jq vim git curl libstdc++ libgomp && \
     mkdir -p /models /loras /work /usr/local/lib
 
 # Set version
@@ -39,7 +39,8 @@ COPY --from=build /src/build/bin/*.so /usr/local/lib/
 ENV ENV=/.env \
     GELLI_PORT=7771 \
     GELLI_CONTEXT= \
-    GELLI_MODEL=ol:qwen3:0.6b \
+    GELLI_DEFAULT=ol:qwen3:0.6b \
+    GELLI_MODEL= \
     GELLI_LORAS=
 
 # Ready to rock

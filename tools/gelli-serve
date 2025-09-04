@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -e
 
-MODEL=${1:-${GELLI_MODEL:-ol:qwen:0.6b}}
+MODEL=${1:-${GELLI_MODEL:-$GELLI_DEFAULT}}
 shift || true
 LORAS=${*:-${GELLI_LORAS:-}}
 PORT=${GELLI_PORT:-7771}
@@ -15,4 +15,4 @@ if [ -n "$LORAS" ]; then
   for f in $LORAS; do FLAGS="$FLAGS --lora /lora/$f.gruf"; done
 fi
 
-exec llama-server --model "/models/$(basename "$MODEL").gguf" $FLAGS --port "$PORT" --ctx-size $CONTEXT
+exec llama-server --model "/models/${MODEL##*/}.gguf" $FLAGS --port "$PORT" --ctx-size $CONTEXT

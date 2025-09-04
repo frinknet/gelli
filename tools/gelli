@@ -11,7 +11,7 @@ if  [ "$1" = "version" ]; then
   exec cat /etc/VERSION
 fi
 
-CMD="/usr/local/bin/gelli-${1:-help}"
+CMD="${0%/*}/gelli-${1:-help}"
 
 shift || true
 

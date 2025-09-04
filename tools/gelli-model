@@ -19,16 +19,15 @@ parse_ol() {
   slug=$(printf '%s\n' "$spec" | cut -d: -f1)
   tag=$(printf '%s\n' "$spec" | cut -s -d: -f2)
   tag="${tag:-latest}"
-  out=$(echo "$slug:$tag" | sed 's#[:/\]#-#g')
-  dest="/models/$out.gguf"
+  dest="/models/$(echo "$slug:$tag" | sed 's#[:/\]#-#g').gguf"
 
-  [ -f "$dest" ] && { echo "$out"; return; }
+  [ -f "$dest" ] && { echo "$dest"; return; }
 
   manifest="https://registry.ollama.ai/v2/library/${slug}/manifests/${tag}"
 
-  wget -qO- --method=HEAD "$manifest" || error FAILED MANIFEST $manifest
+  curl -sLX HEAD "$manifest" > /dev/null || error FAILED MANIFEST $manifest
 
-  digest=$(wget -qO- "$manifest" | jq -r '.layers[0].digest')
+  digest=$(curl -sL "$manifest" | jq -r '.layers[0].digest')
   url="https://registry.ollama.ai/v2/library/${slug}/blobs/$digest"
 
   echo "$dest" "$url"
@@ -39,10 +38,10 @@ parse_hf() {
   repo=$(printf '%s\n' "$spec" | cut -d: -f1)
   quant=$(printf '%s\n' "$spec" | cut -s -d: -f2)
   file=$(printf '%s\n' "$spec" | cut -s -d: -f3)
-  out=$(echo "${repo}-${quant}-${file}" | sed 's#[:/\]#-#g')
-  dest="/models/$out.gguf"
+  file="${file:-model.gguf}"
+  dest="/models/$(echo "${repo//\//-}-${quant}-${file}" | sed 's#[:/\]#-#g')a"
 
-  [ -f "$dest" ] && { echo "$out"; return; }
+  [ -f "$dest" ] && { echo "$dest"; return; }
 
   url="https://huggingface.co/$repo/resolve/main/$file.gguf"
 
@@ -53,7 +52,7 @@ parse() {
   case "$1" in
     ol:*) parse_ol "$1";;
     hf:*) parse_hf "$1";;
-    *) echo "/models/$(basename "$1").gguf";;
+    *) echo "/models/${1##*/}.gguf";;
   esac
 }
 
@@ -61,19 +60,19 @@ fetch() {
   dest="$1"
   url="$2"
 
-  [ -f "$dest" ] || wget -qO "$dest" "$url" || error FAILED FETCH $url
+  [ -f "$dest" ] || curl -sL "$url" > $dest || error FAILED MODEL FETCH $url
   [ -f "$dest" ] && basename "${dest%.*}"
 }
 
 download() {
-  for arg in "$@"; do
+  for arg in "${@:-}"; do
     fetch $(parse "$arg") || error MISSING $arg
   done
 }
 
 outfile() {
   src="$1"
-  dest="/work/$(basename "$1")"
+  dest="/work/${1##*/}"
 
   mv "$src" "$dest" 
 }
@@ -86,7 +85,7 @@ export() {
 
 infile() {
   src="$1"
-  dest="/models/$(basename "$1")"
+  dest="/models/${1##*/}"
 
   mv "$src" "$dest" 
 }
@@ -105,8 +104,6 @@ list() {
   for f in $glob; do
     [ -f "$f" ] && printf '%s\n' "${f%.*}"
   done
-
-  exit 0
 }
 
 delete() {
@@ -125,8 +122,8 @@ error() {
 
 case "$1" in
   "") exec gelli-help model;;
-  list) list "${@:2}";;
-  delete) delete "${@:2}";;
+  list) shift; list "$@";;
+  delete) shift; delete "$@";;
   download) download "$@";;
   import) import "$@";;
   export) export "$@";;

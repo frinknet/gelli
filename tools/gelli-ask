@@ -15,13 +15,9 @@ set -e
 #     gelli ask ol:qwen3:0.6b -- "What do you know"
 #     cat file  |  gelli ask ol:qwen3:0.6b -- "can you do something with this"
 
-
-MODEL=${1:-${GELLI_MODEL:-ol:qwen:0.6b}}
-LORAS=${1:-${GELLI_LORAS:-}}
 CONTEXT=${GELLI_CONTEXT:-131072}
 
-shift || true
-
+MODEL=""
 LORAS=""
 FLAGS=""
 PROMPT=""
@@ -30,7 +26,14 @@ while [ $# -gt 0 ]; do
   case $1 in
     --)
       shift
+
       PROMPT="$*"
+
+      if [ -z "$MODEL" ]; then
+        MODEL=${GELLI_MODEL:-$GELLI_DEFAULT}
+        LORAS=${GELLI_LORAS:-}
+      fi
+
       break
       ;;
     *)
@@ -57,4 +60,4 @@ if [ -n "$LORAS" ]; then
 fi
 
 #TODO if we have the server running ask the question there assuming it has the right model
-exec llama-cli --model "/models/$(basename "$MODEL").gguf" $FLAGS --ctx-size $CONTEXT --prompt "$PROMPT" --temp 0.1 --silent --no-display-prompt
+echo llama-cli --model "/models/${MODEL##*/}.gguf" $FLAGS --ctx-size $CONTEXT --prompt "$PROMPT" --temp 0.1 --no-display-prompt

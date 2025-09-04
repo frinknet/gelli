@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -e
 
-MODEL=${1:-${GELLI_MODEL:-ol:qwen:0.6b}}
+MODEL=${1:-${GELLI_MODEL:-$GELLI_DEFAULT}}
 
 shift
 
@@ -33,7 +33,7 @@ done
 gelli-model "$MODEL"
 
 exec llama-finetune \
-  --model-base "/models/$(basename "$MODEL").gguf" \
+  --model-base "/models/${MODEL##*/}.gguf" \
   --train-data "/tmp/${LORA_NAME}-corpus.txt" \
   --lora-out "/loras/${LORA_NAME}.gguf" \
   --threads "${THREADS:-$(nproc)}" \
