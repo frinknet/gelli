@@ -56,13 +56,14 @@ update)
 shell)
   exec docker run -it --entrypoint sh \\
     -v "\$(pwd):/work" \\
+    -v ~/.vimrc:/root/.vimrc \\
     -v gelli-models:/models \\
     -v gelli-loras:/loras \\
-    -v ~/.vimrc:/root/.vimrc \\
     -e GELLI_CONTEXT \\
     -e GELLI_MODEL \\
     -e GELLI_LORAS \\
     -e GELLI_PORT \\
+    -e TERM \\
     -e ENV="/root/.profile" \\
     "\$IMAGE"
   ;;
