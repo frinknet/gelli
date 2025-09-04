@@ -40,26 +40,65 @@ cat > "$WRAP" <<EOF
 set -eu
 
 IMAGE="$IMAGE"
-VERSION="$VER"
+
+cd \$(git rev-parse --show-toplevel 2>/dev/null || echo ".")
+
+[ -f ".env" ] && source .env
+
+# Set memory limit if not specified (leave 2GB for system)
+if [ -z "\${GELLI_MEMORY:-}" ]; then
+  GELLI_MEMORY=\$(awk '/MemAvailable/ {print int(\$2/1024/1024)}' /proc/meminfo 2>/dev/null || echo "4")
+  GELLI_MEMORY=\$((GELLI_MEMORY * 0.8))
+fi
+
+# Set context size if not specified
+if [ -z "\${GELLI_CONTEXT:-}" ]; then
+  if [ \$GELLI_MEMORY -lt 1 ]; then
+    export GELLI_CONTEXT=512
+  elif [ \$GELLI_MEMORY -lt 2 ]; then
+    export GELLI_CONTEXT=1024
+  elif [ \$GELLI_MEMORY -lt 4 ]; then
+    export GELLI_CONTEXT=2048
+  elif [ \$GELLI_MEMORY -lt 8 ]; then
+    export GELLI_CONTEXT=4096
+  elif [ \$GELLI_MEMORY -lt 16 ]; then
+    export GELLI_CONTEXT=8192
+  else
+    export GELLI_CONTEXT=0  # Use model's full context
+  fi
+fi
+
+# Set batch size if not specified
+if [ -z "\${GELLI_BATCH:-}" ]; then
+  if [ \$GELLI_MEMORY -lt 1 ]; then
+    export GELLI_BATCH=128
+  elif [ \$GELLI_MEMORY -lt 2 ]; then
+    export GELLI_BATCH=256
+  elif [ \$GELLI_MEMORY -lt 4 ]; then
+    export GELLI_BATCH=512
+  elif [ \$GELLI_MEMORY -lt 8 ]; then
+    export GELLI_BATCH=1024
+  else
+    export GELLI_BATCH=2048
+  fi
+fi
 
 case "\${1:-}" in
 update)
-  TMP="\$(mktemp)"
-
-  trap 'rm -f "\$TMP"' EXIT
-
-  curl -fsSL "https://github.com/${REPO#*/}/raw/main/install.sh" -o "\$TMP"
-
-  exec sh "\$TMP" "\$VERSION"
+  VER=\${2:-$VER}
+  curl -fsSL "https://github.com/${REPO#*/}/raw/main/install.sh" | sh "\$VER"
 
   ;;
 shell)
   exec docker run -it --entrypoint sh \\
-    -v "\$(pwd):/work" \\
+    -m \${GELLI_MEMORY}g \\
+    -v "\$PWD:/work" \\
     -v ~/.vimrc:/root/.vimrc \\
     -v gelli-models:/models \\
     -v gelli-loras:/loras \\
+    -e GELLI_MEMORY \\
     -e GELLI_CONTEXT \\
+    -e GELLI_BATCH \\
     -e GELLI_MODEL \\
     -e GELLI_LORAS \\
     -e GELLI_PORT \\
@@ -68,13 +107,17 @@ shell)
   ;;
 *)
   exec docker run --rm -i \\
-    -v "\$(pwd):/work" \\
+    -m \${GELLI_MEMORY}g \\
+    -v "\$PWD:/work" \\
     -v gelli-models:/models \\
     -v gelli-loras:/loras \\
+    -e GELLI_MEMORY \\
     -e GELLI_CONTEXT \\
+    -e GELLI_BATCH \\
     -e GELLI_MODEL \\
     -e GELLI_LORAS \\
     -e GELLI_PORT \\
+    -e TERM \\
     "\$IMAGE" "\$@"
   ;;
 esac

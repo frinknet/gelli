@@ -38,7 +38,7 @@ COPY --from=build /src/build/bin/*.so /usr/local/lib/
 # Set defaults environment
 ENV ENV=/.env \
     GELLI_PORT=7771 \
-    GELLI_CONTEXT= \
+    GELLI_CONTEXT=0 \
     GELLI_DEFAULT=ol:qwen3:0.6b \
     GELLI_MODEL= \
     GELLI_LORAS=

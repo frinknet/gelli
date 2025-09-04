@@ -7,7 +7,7 @@ set -e
 #
 #   MODEL defaults to $GELLI_MODEL or ol:qwen:0.6b
 #   LORAS defaults to $GELLI_LORAS (space separated)
-#   CONTEXT defaults to $GELLI_CONTEXT or 131072
+#   set $GELLI_CONTEXT or else uses the model default
 #   PROMPT can be provided after -- or via piped stdin
 #
 #   Examples:
@@ -15,7 +15,8 @@ set -e
 #     gelli ask ol:qwen3:0.6b -- "What do you know"
 #     cat file  |  gelli ask ol:qwen3:0.6b -- "can you do something with this"
 
-CONTEXT=${GELLI_CONTEXT:-131072}
+CONTEXT=${GELLI_CONTEXT:-0}
+BATCH=${GELLI_BATCH:-512}
 
 MODEL=""
 LORAS=""
@@ -60,4 +61,5 @@ if [ -n "$LORAS" ]; then
 fi
 
 #TODO if we have the server running ask the question there assuming it has the right model
-echo llama-cli --model "/models/${MODEL##*/}.gguf" $FLAGS --ctx-size $CONTEXT --prompt "$PROMPT" --temp 0.1 --no-display-prompt
+echo llama-cli --model "/models/${MODEL##*/}.gguf" $FLAGS --ctx-size $CONTEXT --batch-size $BATCH --prompt "$PROMPT" --temp 0.1 --no-display-prompt
+exec llama-cli --model "/models/${MODEL##*/}.gguf" $FLAGS --ctx-size $CONTEXT --batch-size $BATCH --prompt "$PROMPT" --temp 0.1 --no-display-prompt

@@ -10,7 +10,7 @@
 ### Compile, quantize, bake, train, import and export AI artifact with the casual flair...
 
 ```bash
-curl -L https://github.com/frinknet/gelli/raw/main/install.sh | sh
+curl -fsSL https://github.com/frinknet/gelli/raw/main/install.sh | sh
 ```
 
 just install and it will do the rest...

@@ -11,6 +11,8 @@ if  [ "$1" = "version" ]; then
   exec cat /etc/VERSION
 fi
 
+[ -f ".env" ] && source .env
+
 CMD="${0%/*}/gelli-${1:-help}"
 
 shift || true

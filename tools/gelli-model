@@ -27,7 +27,7 @@ parse_ol() {
 
   curl -sLX HEAD "$manifest" > /dev/null || error FAILED MANIFEST $manifest
 
-  digest=$(curl -sL "$manifest" | jq -r '.layers[0].digest')
+  digest=$(curl -fsSL "$manifest" | jq -r '.layers[0].digest')
   url="https://registry.ollama.ai/v2/library/${slug}/blobs/$digest"
 
   echo "$dest" "$url"
@@ -60,7 +60,7 @@ fetch() {
   dest="$1"
   url="$2"
 
-  [ -f "$dest" ] || curl -sL "$url" > $dest || error FAILED MODEL FETCH $url
+  [ -f "$dest" ] || curl -fL "$url" > $dest || error FAILED MODEL FETCH $url
   [ -f "$dest" ] && basename "${dest%.*}"
 }
 
