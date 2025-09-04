@@ -9,7 +9,7 @@ VER="${1:-latest}"
 mkdir -p "$PREFIX"
 case ":$PATH:" in
   *:"$PREFIX":*) ;;
-  *) printf '\nexport PATH="%s:$PATH"\n' "$PREFIX" >> "$HOME/.bashrc" || true ;;
+  *) printf '\nexport PATH="%s:$PATH"\n' "$PREFIX" >> "$HOME/bashrc" || true ;;
 esac
 
 # Pull and tag the image as before
@@ -106,7 +106,13 @@ fi
 case "\${1:-}" in
 update)
   VER=\${2:-$VER}
-  curl -fsSL "https://github.com/${REPO#*/}/raw/main/install.sh" | sh -s -- "\$VER"
+
+  case "\$VER" in
+    v[0-9]*.[0-9]*) BRANCH=main ;;
+    *)              BRANCH=\$VER ;;
+  esac
+
+  curl -fsSL "https://github.com/${REPO#*/}/raw/\$BRANCH/install.sh" | sh -s -- "\$VER"
 
   ;;
 shell)
