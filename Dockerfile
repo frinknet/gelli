@@ -21,7 +21,7 @@ RUN chmod +x /src/build/bin/*
 
 # Final lean stage
 FROM alpine:latest
-RUN apk add --no-cache jq vim && \
+RUN apk add --no-cache jq vim git && \
     mkdir -p /models /loras /work /usr/local/lib
 
 # Set version
