@@ -40,6 +40,7 @@ ENV ENV=/.env \
     GELLI_PORT=7771 \
     GELLI_CTX_SIZE=0 \
     GELLI_DEFAULT=ol:qwen2.5-Coder:0.5b-Instruct \
+    GELLI_CODER=ol:qwen2.5-Coder:0.5b-Instruct \
     GELLI_MODEL= \
     GELLI_LORAS=
 

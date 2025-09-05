@@ -10,7 +10,7 @@ if [ -z "$MODEL" ]; then
     exit 1
 fi
 
-gelli-model "$MODEL"
+gelli-models "$MODEL"
 
 if [ -n "$LORAS" ]; then
     LORA_NAMES=""
@@ -18,7 +18,7 @@ if [ -n "$LORAS" ]; then
     for lora_spec in $LORAS; do
         LORA_NAME="${lora_spec%%:*}" LORA_NAMES="$LORA_NAMES $LORA_NAME" done
 
-    gelli-lora $LORA_NAMES
+    gelli-loras $LORA_NAMES
 fi
 
 MODEL_FILE="/models/$MODEL.gguf"

@@ -1,0 +1,65 @@
+#!/usr/bin/env sh
+
+# USAGE: gelli coder - AI coder to fix things
+#
+# gelli coder [file] [context...] [-- prompt] - Run model inference with specified prompt and optional LoRAs
+#
+#   MODEL defaults to $GELLI_MODEL or ol:qwen2.5-Coder:0.5b-Instruct
+#   LORAS defaults to $GELLI_LORAS (space separated)
+#
+#   Examples:
+#
+#     cat file  |  gelli coder
+
+
+EXT=""
+FILE=""
+CONTEXT=""
+PROMPT=""
+
+while [ $# -gt 0 ]; do
+  case $1 in
+    --)
+      shift
+
+      PROMPT="$*"
+
+      break
+      ;;
+    *)
+      if [ -z "$EXT" ]; then 
+          EXT="${1##*.}"
+      fi
+      if [ ! -t 0 ] && [ -z "$FILE" ]; then
+        FILE="$1"
+      else
+        CONTEXT="$CONTEXT $1"
+      fi
+      ;;
+  esac
+
+  shift
+done
+
+if [ -z "$GELLI_CODER_PROMPT" ]; then
+  GELLI_CODER_PROMPT="You fix and complete [ext] code. Address FIX comments while ignoring TODOs. Respond only with the [ext] source file."
+fi
+
+if [ -z "$EXT" ]; then
+  EXT="source"
+fi
+
+export GELLI_SYSTEM_PROMPT="${GELLI_CODER_PROMPT//[ext]/$EXT}"
+export GELLI_MODEL="$GELLI_CODER_MODEL"
+export GELLI_LORAS="$GELLI_CODER_LORAS"
+
+{
+  echo "$PROMPT"
+  echo "<|start_context|>"
+  [ -n "$CONTEXT" ] && cat $CONTEXT
+  echo "<|end_context|>"
+  echo "<|start_file|>"
+  [ -t 0 ] && cat
+  [ -n "$FILE" ] && cat "$FILE"
+  echo "<|end_file|>"
+} | exec gelli-prompt 

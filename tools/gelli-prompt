@@ -7,8 +7,6 @@ set -e
 #
 #   MODEL defaults to $GELLI_MODEL or ol:qwen2.5-Coder:0.5b-Instruct
 #   LORAS defaults to $GELLI_LORAS (space separated)
-#   set $GELLI_CTX_SIZE or else uses the model default
-#   PROMPT can be provided after -- or via piped stdin
 #
 #   Examples:
 #
@@ -23,18 +21,17 @@ OUTPUT_SIZE=${GELLI_OUTPUT_SIZE:-999999}
 FLAGS="$GELLI_LLAMA_FLAGS"
 MODEL=""
 LORAS=""
-PROMPT=""
+PROMPT="$GELLI_SYSTEM_PROMPT"
 
 while [ $# -gt 0 ]; do
   case $1 in
     --)
       shift
 
-      PROMPT="$*"
-
-      if [ -z "$MODEL" ]; then
-        MODEL=${GELLI_MODEL:-$GELLI_DEFAULT}
-        LORAS=${GELLI_LORAS:-}
+      if [ -z "$PROMPT" ]; then
+        PROMPT="$*"
+      else
+        PROMPT="$PROMPT\n\n$*"
       fi
 
       break
@@ -51,14 +48,23 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-MODEL=$(gelli-model $MODEL)
-LORAS=$(gelli-lora $LORAS)
+if [ -z "$MODEL" ]; then
+  MODEL=${GELLI_MODEL:-$GELLI_DEFAULT}
+  LORAS=${GELLI_LORAS:-}
+fi
+
+if [ -z "$PROMPT" ]; then
+  PROMPT="You are a helpful AI assistant."
+fi
+
+MODEL=$(gelli-models $MODEL)
+LORAS=$(gelli-loras $LORAS)
 
 if [ -n "$LORAS" ]; then
   for f in $LORAS; do FLAGS="$FLAGS --lora /loras/$f.gguf"; done
 fi
 
-exec llama-cli --model "/models/${MODEL##*/}.gguf" $FLAGS \
+echo llama-cli --model "/models/${MODEL##*/}.gguf" $FLAGS \
   --batch-size $BATCH_SIZE \
   --ctx-size $CTX_SIZE \
   -n $OUTPUT_SIZE \
@@ -67,5 +73,4 @@ exec llama-cli --model "/models/${MODEL##*/}.gguf" $FLAGS \
   --simple-io \
   --no-warmup \
   --no-display-prompt \
-  2>/dev/null \
-  | sed '1d; 2s/^> //; /^> EOF by user$/d'
+  2>/dev/null #| sed '1d; 2s/^> //; /^> EOF by user$/d'
