@@ -30,7 +30,7 @@ find /work $FIND_EXTS  | while read -r file; do
   } >> "/tmp/${LORA_NAME}-corpus.txt"
 done
 
-gelli-model "$MODEL"
+MODEL$(gelli-models download "$MODEL")
 
 exec llama-finetune \
   --model-base "/models/${MODEL##*/}.gguf" \

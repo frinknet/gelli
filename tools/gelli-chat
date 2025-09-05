@@ -48,8 +48,8 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-MODEL=$(gelli-models $MODEL)
-LORAS=$(gelli-loras $LORAS)
+MODEL=$(gelli-models download $MODEL)
+LORAS=$(gelli-loras download $LORAS)
 
 if [ -n "$LORAS" ]; then
   for f in $LORAS; do FLAGS="$FLAGS --lora /loras/$f.gguf"; done

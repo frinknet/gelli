@@ -34,4 +34,6 @@ done
 
 echo "→ Baking $LORAS into $MODEL"
 
-llama-export-lora --model-base "$(gelli-model $MODEL)" --model-out "$OUTPUT.gguf" $FLAGS
+MODEL=$(gelli-models download $MODEL)
+
+llama-export-lora --model-base "/models/$MODEL.gguf" --model-out "$OUTPUT.gguf" $FLAGS

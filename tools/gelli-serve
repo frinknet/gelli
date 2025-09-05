@@ -14,8 +14,8 @@ LORAS=${*:-${GELLI_LORAS:-}}
 PORT=${GELLI_PORT:-7771}
 FLAGS=""
 
-MODEL=$(gelli-models $MODEL)
-LORAS=$(gelli-loras $LORAS)
+MODEL=$(gelli-models download $MODEL)
+LORAS=$(gelli-loras download $LORAS)
 
 if [ -n "$LORAS" ]; then
   for f in $LORAS; do FLAGS="$FLAGS --lora /lora/$f.gruf"; done

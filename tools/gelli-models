@@ -121,11 +121,10 @@ error() {
 }
 
 case "$1" in
-  "") exec gelli-help model;;
   list) shift; list "$@";;
   delete) shift; delete "$@";;
   download) download "$@";;
   import) import "$@";;
   export) export "$@";;
-  *) download "$@";;
+  *) exec gelli-help models;;
 esac

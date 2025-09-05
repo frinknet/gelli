@@ -10,7 +10,7 @@ if [ -z "$MODEL" ]; then
     exit 1
 fi
 
-gelli-models "$MODEL"
+MODEL=$(gelli-models download "$MODEL")
 
 if [ -n "$LORAS" ]; then
     LORA_NAMES=""
