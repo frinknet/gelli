@@ -61,5 +61,4 @@ if [ -n "$LORAS" ]; then
 fi
 
 #TODO if we have the server running ask the question there assuming it has the right model
-echo llama-cli --model "/models/${MODEL##*/}.gguf" $FLAGS --ctx-size $CONTEXT --batch-size $BATCH --prompt "$PROMPT" --temp 0.1 --no-display-prompt
-exec llama-cli --model "/models/${MODEL##*/}.gguf" $FLAGS --ctx-size $CONTEXT --batch-size $BATCH --prompt "$PROMPT" --temp 0.1 --no-display-prompt
+exec llama-cli --model "/models/${MODEL##*/}.gguf" $FLAGS --ctx-size $CONTEXT --batch-size $BATCH --prompt "$PROMPT" --temp 0.1 --no-display-prompt --single-turn
