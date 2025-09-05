@@ -20,9 +20,9 @@ CTX_SIZE=${GELLI_CTX_SIZE:-0}
 BATCH_SIZE=${GELLI_BATCH_SIZE:-512}
 OUTPUT_SIZE=${GELLI_OUTPUT_SIZE:-999999}
 
+FLAGS="$GELLI_LLAMA_FLAGS"
 MODEL=""
 LORAS=""
-FLAGS=""
 PROMPT=""
 
 while [ $# -gt 0 ]; do
@@ -58,15 +58,13 @@ if [ -n "$LORAS" ]; then
   for f in $LORAS; do FLAGS="$FLAGS --lora /loras/$f.gguf"; done
 fi
 
-if [ ! -t 0 ]; then
-  PROMPT="$PROMPT\n\n$(cat)"
-fi
-
-echo "$PROMPT" | exec llama-cli --model "/models/${MODEL##*/}.gguf" $FLAGS \
-  --ctx-size $CTX_SIZE \
+exec llama-cli --model "/models/${MODEL##*/}.gguf" $FLAGS \
   --batch-size $BATCH_SIZE \
+  --ctx-size $CTX_SIZE \
   -n $OUTPUT_SIZE \
+  --system-prompt "$PROMPT" \
   --temp $TEMP \
   --simple-io \
+  --single-turn \
   --no-display-prompt \
-  --single-turn
+  2>/dev/null

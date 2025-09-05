@@ -130,6 +130,7 @@ shell)
     -e GELLI_CTX_SIZE \\
     -e GELLI_BATCH_SIZE \\
     -e GELLI_OUTPUT_SIZE \\
+    -e GELLI_LLAMA_FLAGS \\
     -e TERM \\
     "\$IMAGE"
   ;;
@@ -147,6 +148,7 @@ shell)
     -e GELLI_CTX_SIZE \\
     -e GELLI_BATCH_SIZE \\
     -e GELLI_OUTPUT_SIZE \\
+    -e GELLI_LLAMA_FLAGS \\
     -e TERM \\
     "\$IMAGE" "\$@"
   ;;
