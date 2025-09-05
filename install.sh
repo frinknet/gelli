@@ -70,36 +70,36 @@ else
 fi
 
 # Set context size if not specified
-if [ -z "\${GELLI_CONTEXT:-}" ]; then
+if [ -z "\${GELLI_CTX_SIZE:-}" ]; then
   if [ \$GELLI_MEMORY -lt 1024 ]; then
-    export GELLI_CONTEXT=512
+    export GELLI_CTX_SIZE=512
   elif [ \$GELLI_MEMORY -lt 2048 ]; then
-    export GELLI_CONTEXT=1024
+    export GELLI_CTX_SIZE=1024
   elif [ \$GELLI_MEMORY -lt 4096 ]; then
-    export GELLI_CONTEXT=2048
+    export GELLI_CTX_SIZE=2048
   elif [ \$GELLI_MEMORY -lt 8192 ]; then
-    export GELLI_CONTEXT=4096
+    export GELLI_CTX_SIZE=4096
   elif [ \$GELLI_MEMORY -lt 16384 ]; then
-    export GELLI_CONTEXT=8192
+    export GELLI_CTX_SIZE=8192
   elif [ \$GELLI_MEMORY -lt 32768 ]; then
-    export GELLI_CONTEXT=16384
+    export GELLI_CTX_SIZE=16384
   else
-    export GELLI_CONTEXT=0  # Use model's full context
+    export GELLI_CTX_SIZE=0  # Use model's full context
   fi
 fi
 
 # Set batch size if not specified
-if [ -z "\${GELLI_BATCH:-}" ]; then
+if [ -z "\${GELLI_BATCH_SIZE:-}" ]; then
   if [ \$GELLI_MEMORY -lt 1024 ]; then
-    export GELLI_BATCH=128
+    export GELLI_BATCH_SIZE=128
   elif [ \$GELLI_MEMORY -lt 2048 ]; then
-    export GELLI_BATCH=256
+    export GELLI_BATCH_SIZE=256
   elif [ \$GELLI_MEMORY -lt 4096 ]; then
-    export GELLI_BATCH=512
+    export GELLI_BATCH_SIZE=512
   elif [ \$GELLI_MEMORY -lt 8192 ]; then
-    export GELLI_BATCH=1024
+    export GELLI_BATCH_SIZE=1024
   else
-    export GELLI_BATCH=2048
+    export GELLI_BATCH_SIZE=2048
   fi
 fi
 
@@ -122,12 +122,14 @@ shell)
     -v ~/.vimrc:/root/.vimrc \\
     -v gelli-models:/models \\
     -v gelli-loras:/loras \\
-    -e GELLI_MEMORY \\
-    -e GELLI_CONTEXT \\
-    -e GELLI_BATCH \\
+    -e GELLI_PORT \\
+    -e GELLI_TEMP \\
     -e GELLI_MODEL \\
     -e GELLI_LORAS \\
-    -e GELLI_PORT \\
+    -e GELLI_MEMORY \\
+    -e GELLI_CTX_SIZE \\
+    -e GELLI_BATCH_SIZE \\
+    -e GELLI_OUTPUT_SIZE \\
     -e TERM \\
     "\$IMAGE"
   ;;
@@ -137,12 +139,14 @@ shell)
     -v "\$PWD:/work" \\
     -v gelli-models:/models \\
     -v gelli-loras:/loras \\
-    -e GELLI_MEMORY \\
-    -e GELLI_CONTEXT \\
-    -e GELLI_BATCH \\
+    -e GELLI_PORT \\
+    -e GELLI_TEMP \\
     -e GELLI_MODEL \\
     -e GELLI_LORAS \\
-    -e GELLI_PORT \\
+    -e GELLI_MEMORY \\
+    -e GELLI_CTX_SIZE \\
+    -e GELLI_BATCH_SIZE \\
+    -e GELLI_OUTPUT_SIZE \\
     -e TERM \\
     "\$IMAGE" "\$@"
   ;;

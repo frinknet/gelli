@@ -1,11 +1,17 @@
 #!/usr/bin/env sh
 set -e
 
+TEMP=${GELLI_TEMP:-0.1}
+CTX_SIZE=${GELLI_CTX_SIZE:-0}
+BATCH_SIZE=${GELLI_BATCH_SIZE:-512}
+OUTPUT_SIZE=${GELLI_OUTPUT_SIZE:-999999}
+
 MODEL=${1:-${GELLI_MODEL:-$GELLI_DEFAULT}}
+
 shift || true
+
 LORAS=${*:-${GELLI_LORAS:-}}
 PORT=${GELLI_PORT:-7771}
-CONTEXT=${GELLI_CONTEXT:-131072}
 FLAGS=""
 
 MODEL=$(gelli-model $MODEL)
@@ -15,4 +21,9 @@ if [ -n "$LORAS" ]; then
   for f in $LORAS; do FLAGS="$FLAGS --lora /lora/$f.gruf"; done
 fi
 
-exec llama-server --model "/models/${MODEL##*/}.gguf" $FLAGS --port "$PORT" --ctx-size $CONTEXT
+exec llama-server --model "/models/${MODEL##*/}.gguf" $FLAGS \
+  --ctx-size $CTX_SIZE \
+  --batch-size $BATCH_SIZE \
+  -n $OUTPUT_SIZE \
+  --port "$PORT" \
+  --temp $TEMP
