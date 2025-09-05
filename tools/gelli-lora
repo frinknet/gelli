@@ -43,7 +43,7 @@ fetch() {
 }
 
 download() {
-  for arg in "${@:-}"; do
+  for arg in "${@}"; do
     fetch $(parse "$arg") || error MISSING $arg
   done
 }

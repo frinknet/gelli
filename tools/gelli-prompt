@@ -5,7 +5,7 @@ set -e
 #
 # gelli prompt [model] [loras...] [-- prompt] - Run model inference with specified prompt and optional LoRAs
 #
-#   MODEL defaults to $GELLI_MODEL or ol:qwen:0.6b
+#   MODEL defaults to $GELLI_MODEL or ol:qwen2.5-Coder:0.5b-Instruct
 #   LORAS defaults to $GELLI_LORAS (space separated)
 #   set $GELLI_CTX_SIZE or else uses the model default
 #   PROMPT can be provided after -- or via piped stdin
@@ -13,7 +13,7 @@ set -e
 #   Examples:
 #
 #     gelli prompt ol:qwen3:0.6b -- "What do you know"
-#     cat file  |  gelli prompt ol:qwen3:0.6b -- "can you do something with this"
+#     cat file  |  gelli prompt ol:qwen2.5-Coder:0.5b-Instruct -- "can you do something with this"
 
 TEMP=${GELLI_TEMP:-0.1}
 CTX_SIZE=${GELLI_CTX_SIZE:-0}
@@ -65,6 +65,7 @@ exec llama-cli --model "/models/${MODEL##*/}.gguf" $FLAGS \
   --system-prompt "$PROMPT" \
   --temp $TEMP \
   --simple-io \
-  --single-turn \
+  --no-warmup \
   --no-display-prompt \
-  2>/dev/null
+  2>/dev/null \
+  | sed '1d; 2s/^> //; /^> EOF by user$/d'

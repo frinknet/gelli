@@ -39,7 +39,7 @@ COPY --from=build /src/build/bin/*.so /usr/local/lib/
 ENV ENV=/.env \
     GELLI_PORT=7771 \
     GELLI_CTX_SIZE=0 \
-    GELLI_DEFAULT=ol:qwen3:0.6b \
+    GELLI_DEFAULT=ol:qwen2.5-Coder:0.5b-Instruct \
     GELLI_MODEL= \
     GELLI_LORAS=
 

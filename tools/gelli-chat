@@ -5,7 +5,7 @@ set -e
 #
 # gelli ask [model] [loras...] - Run model inference with specified prompt and optional LoRAs
 #
-#   MODEL defaults to $GELLI_MODEL or ol:qwen:0.6b
+#   MODEL defaults to $GELLI_MODEL or ol:qwen2.5-Coder:0.5b-Instruct
 #   LORAS defaults to $GELLI_LORAS (space separated)
 #
 #   Examples:
@@ -60,6 +60,7 @@ exec llama-cli --model "/models/${MODEL##*/}.gguf" $FLAGS \
   --batch-size $BATCH_SIZE \
   -n $OUTPUT_SIZE \
   --temp $TEMP \
-  --no-display-prompt \
+  --color \
   --conversation \
-  --prompt "$PROMPT"
+  --no-display-prompt \
+  --system-prompt "$PROMPT" 2>/dev/null
