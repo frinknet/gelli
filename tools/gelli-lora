@@ -38,7 +38,7 @@ fetch() {
   dest="$1"
   url="$2"
 
-  [ -f "$dest" ] || curn -s "$url"  > "$dest" || error FAILED LORA FETCH $url
+  [ -f "$dest" ] || curl -s "$url"  > "$dest" || error FAILED LORA FETCH $url
   [ -f "$dest" ] && basename "${dest%.*}"
 }
 
