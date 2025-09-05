@@ -1,13 +1,13 @@
 #!/usr/bin/env sh
 set -e
 
-# USAGE: gelli model - Manage Models
+# USAGE: gelli models - Manage Models
 # 
-# gelli model list [model]     - Lists  models
-# gelli model import [model]   - Import models
-# gelli model export [model]   - Export models
-# gelli model delete [model]   - Delete models
-# gelli model download [model] - Downloads models
+# gelli models list [model]     - Lists  models
+# gelli models import [model]   - Import models
+# gelli models export [model]   - Export models
+# gelli models delete [model]   - Delete models
+# gelli models download [model] - Downloads models
 # 
 #   Use ol:model:tag for Ollama model.
 #   Use hf:repo:quant:file for HuggingFace models.

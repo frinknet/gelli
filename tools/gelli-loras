@@ -1,13 +1,13 @@
 #!/usr/bin/env sh
 set -e
 
-# USAGE: gelli lora - Manage LoRAs
+# USAGE: gelli loras - Manage LoRAs
 # 
-# gelli lora list [lora]     - Lists  LoRAs
-# gelli lora import [lora]   - Import LoRAs
-# gelli lora export [lora]   - Export LoRAs
-# gelli lora delete [lora]   - Delete LoRAs
-# gelli lora download [lora] - Downloads LoRAs
+# gelli loras list [lora]     - Lists  LoRAs
+# gelli loras import [lora]   - Import LoRAs
+# gelli loras export [lora]   - Export LoRAs
+# gelli loras delete [lora]   - Delete LoRAs
+# gelli loras download [lora] - Downloads LoRAs
 # 
 #   Use hf:repo:file for HuggingFace LoRAs.
 # 
