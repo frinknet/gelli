@@ -55,10 +55,13 @@ list-fn() {
 
 setup-worktree() {
   dir="/worktree/$BRANCH"
+
   mkdir -p "$dir"
   git add worktree "$dir"
   cd "$dir"
-  git switch "$dir"
+
+  # Try to switch, create if doesn't exist
+  git switch "$BRANCH" 2>/dev/null || git switch -c "$BRANCH"
 }
 
 while [ $# -gt 0 ]; do
