@@ -17,7 +17,4 @@ CMD="${0%/*}/gelli-${1:-help}"
 
 shift || true
 
-# Add this to your GELLI container startup
-git config --global --add safe.directory "$PWD"
-
 [ -f "$CMD" ] && exec "$CMD" "$@" || error UNKNOWN COMMAND: $1 >&2
