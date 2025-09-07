@@ -28,6 +28,12 @@ API=${GELLI_API_URL:-http://localhost:$PORT}
 KEY=${GELLI_API_KEY:-GELLI}
 MAX=${GELLI_MAY_TRYS:-12}
 
+cleanup() {
+    [ -n "$SERVER_PID" ] && kill "$SERVER_PID" 2>/dev/null
+        wait "$SERVER_PID" 2>/dev/null
+}
+trap cleanup EXIT SIGTERM SIGINT
+
 call-ai() {
   curl -s "$API" \
     -H "Authorization: Bearer $KEY" \
@@ -105,7 +111,11 @@ if [ -n "$LORAS" ]; then
   for f in $LORAS; do FLAGS="$FLAGS --lora /loras/$f.gguf"; done
 fi
 
-[ -z "$GELLI_API_URL" ] && gelli-serve $MODEL $LORAS
+if [ -z "$GELLI_API_URL" ]; then
+  gelli-serve $MODEL $LORAS 2>&1 > /dev/null &
+
+  SERVER_PID=$!
+fi
 
 setup-worktree
 
