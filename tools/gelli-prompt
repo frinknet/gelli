@@ -64,7 +64,7 @@ if [ -n "$LORAS" ]; then
   for f in $LORAS; do FLAGS="$FLAGS --lora /loras/$f.gguf"; done
 fi
 
-echo llama-cli --model "/models/${MODEL##*/}.gguf" $FLAGS \
+exec llama-cli --model "/models/${MODEL##*/}.gguf" $FLAGS \
   --batch-size $BATCH_SIZE \
   --ctx-size $CTX_SIZE \
   -n $OUTPUT_SIZE \
@@ -72,5 +72,6 @@ echo llama-cli --model "/models/${MODEL##*/}.gguf" $FLAGS \
   --temp $TEMP \
   --simple-io \
   --no-warmup \
-  --no-display-prompt \
+  --no-conversation \
+#--no-display-prompt \
   2>/dev/null #| sed '1d; 2s/^> //; /^> EOF by user$/d'

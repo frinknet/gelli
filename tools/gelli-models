@@ -60,13 +60,13 @@ fetch() {
   dest="$1"
   url="$2"
 
-  [ -f "$dest" ] || curl -fL "$url" > $dest || error FAILED MODEL FETCH $url
+  [ -f "$dest" ] || curl -fLo "$dest" "$url" || error FAILED MODEL FETCH $url
   [ -f "$dest" ] && basename "${dest%.*}"
 }
 
 download() {
   for arg in "${@:-}"; do
-    fetch $(parse "$arg") || error MISSING $arg
+    fetch $(parse "$arg")
   done
 }
 
@@ -120,7 +120,11 @@ error() {
   exit 1
 }
 
-case "$1" in
+CMD="$1"
+
+shift
+
+case "$CMD" in
   list) shift; list "$@";;
   delete) shift; delete "$@";;
   download) download "$@";;

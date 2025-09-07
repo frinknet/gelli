@@ -132,6 +132,9 @@ shell)
     -e GELLI_OUTPUT_SIZE \\
     -e GELLI_LLAMA_FLAGS \\
     -e GELLI_SYSTEM_PROMPT \\
+    -e GELLI_CODER_PROMPT \\
+    -e GELLI_CODER_MODEL \\
+    -e GELLI_CODER_LORAS \\
     -e TERM \\
     "\$IMAGE"
   ;;
@@ -151,6 +154,9 @@ shell)
     -e GELLI_OUTPUT_SIZE \\
     -e GELLI_LLAMA_FLAGS \\
     -e GELLI_SYSTEM_PROMPT \\
+    -e GELLI_CODER_PROMPT \\
+    -e GELLI_CODER_MODEL \\
+    -e GELLI_CODER_LORAS \\
     -e TERM \\
     "\$IMAGE" "\$@"
   ;;

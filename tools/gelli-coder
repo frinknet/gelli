@@ -15,7 +15,21 @@
 EXT=""
 FILE=""
 CONTEXT=""
+SYSTEM=""
 PROMPT=""
+
+TEMP=${GELLI_TEMP:-0.1}
+CTX_SIZE=${GELLI_CTX_SIZE:-0}
+BATCH_SIZE=${GELLI_BATCH_SIZE:-512}
+OUTPUT_SIZE=${GELLI_OUTPUT_SIZE:-999999}
+
+FLAGS="$GELLI_LLAMA_FLAGS"
+MODEL=""
+LORAS=""
+PROMPT="$GELLI_SYSTEM_PROMPT"
+
+
+[ ! -t 0 ] && FILE="input"
 
 while [ $# -gt 0 ]; do
   case $1 in
@@ -30,7 +44,7 @@ while [ $# -gt 0 ]; do
       if [ -z "$EXT" ]; then 
           EXT="${1##*.}"
       fi
-      if [ ! -t 0 ] && [ -z "$FILE" ]; then
+      if [ -z "$FILE" ]; then
         FILE="$1"
       else
         CONTEXT="$CONTEXT $1"
@@ -42,24 +56,46 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -z "$GELLI_CODER_PROMPT" ]; then
-  GELLI_CODER_PROMPT="You fix and complete [ext] code. Address FIX comments while ignoring TODOs. Respond only with the [ext] source file."
+  GELLI_CODER_PROMPT="You fix and complete [ext] code. Address the user instructions. Respond only with the modified [file] using the other files for context."
 fi
 
 if [ -z "$EXT" ]; then
   EXT="source"
 fi
 
-export GELLI_SYSTEM_PROMPT="${GELLI_CODER_PROMPT//[ext]/$EXT}"
-export GELLI_MODEL="$GELLI_CODER_MODEL"
-export GELLI_LORAS="$GELLI_CODER_LORAS"
+SYSTEM="${GELLI_CODER_PROMPT//[ext]/$EXT}"
+SYSTEM="${SYSTEM//[file]/$FILE}"
+
+MODEL="${GELLI_CODER_MODEL:-${GELLI_DEFAULT}}"
+LORAS="$GELLI_CODER_LORAS"
+
+MODEL=$(gelli-models download $MODEL)
+LORAS=$(gelli-loras download $LORAS)
+
+if [ -n "$LORAS" ]; then
+  for f in $LORAS; do FLAGS="$FLAGS --lora /loras/$f.gguf"; done
+fi
 
 {
-  echo "$PROMPT"
-  echo "<|start_context|>"
-  [ -n "$CONTEXT" ] && cat $CONTEXT
-  echo "<|end_context|>"
-  echo "<|start_file|>"
-  [ -t 0 ] && cat
+  echo "$SYSTEM"
+  for ctx in $CONTEXT; do
+    echo "=== context: $ctx ==="
+    cat "$ctx"
+  done
+  echo "=== work: $FILE ==="
+  [ ! -t 0 ] && cat
   [ -n "$FILE" ] && cat "$FILE"
-  echo "<|end_file|>"
-} | exec gelli-prompt 
+  echo "=== instruction ==="
+  echo "$PROMPT"
+  echo "<think>"
+} | cat 
+#| exec llama-cli --model "/models/${MODEL##*/}.gguf" $FLAGS \
+#  --batch-size $BATCH_SIZE \
+#  --ctx-size $CTX_SIZE \
+#  -n $OUTPUT_SIZE \
+#  --temp $TEMP \
+#  --simple-io \
+#  --no-warmup \
+#  --no-conversation \
+#  --no-display-prompt \
+#  2>/dev/null #| sed '1d; 2s/^> //; /^> EOF by user$/d'
