@@ -13,10 +13,6 @@ set -euo pipefail
 #     gelli coder ol:qwen3:0.6b -- "Review the code base"
 #     cat file  |  gelli prompt ol:qwen2.5-Coder:0.5b-Instruct -- "can you do something with this"
 
-API=${GELLI_API_URL:-http://localhost:$PORT}
-KEY=${GELLI_API_KEY:-GELLI}
-MAX=${GELLI_MAY_TRYS:-12}
-
 CTX_SIZE=${GELLI_CTX_SIZE:-0}
 BATCH_SIZE=${GELLI_BATCH_SIZE:-512}
 OUTPUT_SIZE=${GELLI_OUTPUT_SIZE:-999999}
@@ -27,6 +23,10 @@ LORAS=""
 FLAGS="$GELLI_LLAMA_FLAGS"
 PROMPT=""
 BRANCH="${GELLI_BRANCH:-gelli-coder}"
+
+API=${GELLI_API_URL:-http://localhost:$PORT}
+KEY=${GELLI_API_KEY:-GELLI}
+MAX=${GELLI_MAY_TRYS:-12}
 
 call-ai() {
   curl -s "$API" \
