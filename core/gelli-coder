@@ -112,7 +112,7 @@ if [ -n "$LORAS" ]; then
 fi
 
 if [ -z "$GELLI_API_URL" ]; then
-  gelli-serve $MODEL $LORAS 2>&1 > /dev/null &
+  gelli-serve $MODEL $LORAS > /dev/null 2>&1 &
 
   SERVER_PID=$!
 fi
