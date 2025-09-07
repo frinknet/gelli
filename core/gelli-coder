@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-set -euo pipefail
+set -e
 
 # USAGE: gelli coder - Run an iteration of the coder AI
 #
