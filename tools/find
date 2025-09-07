@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# DEF: {"name":"find","description":"Find files by name pattern","parameters":{"type":"object","properties":{"filename":{"type":"string","description":"Filename pattern to search"},"dir":{"type":"string","description":"Directory to search","default":"."}},"required":["filename"]}}
+
+filename=$(jq -r '.filename' <<< "$1")
+dir=$(jq -r '.dir // "."' <<< "$1")
+
+[ ! -d "$dir" ] && { echo "Error: Directory '$dir' not found\"; exit 1; }
+
+find "$dir" -name "*$filename*" -type f 2>/dev/null | head -20

@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+set -euo pipefail
+
+# DEF: {"name":"tree","description":"List directory structure with depth limit","parameters":{"type":"object","properties":{"dir":{"type":"string","description":"Directory to explore"}},"required":["dir"]}}
+
+dir=$(jq -r '.dir' <<< "$1")
+
+[ ! -d "$dir" ] && { echo "Error: Directory '$dir' not found"; exit 1; }
+
+tree -a -L 3 "$dir" 2>/dev/null || find "$dir" -maxdepth 3 -type f | head -50

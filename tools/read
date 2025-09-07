@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# DEF: {"name":"read","description":"Read file contents","parameters":{"type":"object","properties":{"filename":{"type":"string","description":"File path to read"}},"required":["filename"]}}
+
+filename=$(jq -r '.filename' <<< "$1")
+
+[ ! -f "$filename" ] && { echo "Error: File '$filename' not found"; exit 1; }
+
+head -100 "$filename"

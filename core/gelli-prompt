@@ -18,9 +18,9 @@ CTX_SIZE=${GELLI_CTX_SIZE:-0}
 BATCH_SIZE=${GELLI_BATCH_SIZE:-512}
 OUTPUT_SIZE=${GELLI_OUTPUT_SIZE:-999999}
 
-FLAGS="$GELLI_LLAMA_FLAGS"
 MODEL=""
 LORAS=""
+FLAGS="$GELLI_LLAMA_FLAGS"
 PROMPT="$GELLI_SYSTEM_PROMPT"
 
 while [ $# -gt 0 ]; do
@@ -67,11 +67,11 @@ fi
 exec llama-cli --model "/models/${MODEL##*/}.gguf" $FLAGS \
   --batch-size $BATCH_SIZE \
   --ctx-size $CTX_SIZE \
-  -n $OUTPUT_SIZE \
-  --system-prompt "$PROMPT" \
+  --predict $OUTPUT_SIZE \
+  --prompt "$PROMPT" \
   --temp $TEMP \
   --simple-io \
   --no-warmup \
+  --single-turn \
   --no-conversation \
-#--no-display-prompt \
   2>/dev/null #| sed '1d; 2s/^> //; /^> EOF by user$/d'

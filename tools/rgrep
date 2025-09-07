@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# DEF: {"name":"rgrep","description":"Search for pattern recursively in files","parameters":{"type":"object","properties":{"pattern":{"type":"string","description":"Search pattern"},"dir":{"type":"string","description":"Directory to search","default":"."}},"required":["pattern"]}}
+
+pattern=$(jq -r '.pattern' <<< "$1")
+dir=$(jq -r '.dir // "."' <<< "$1")
+
+[ ! -d "$dir" ] && { echo "Error: Directory '$dir' not found"; exit 1; }
+
+grep -r --exclude-dir='.git' --exclude-dir='node_modules' -n "$pattern" "$dir" 2>/dev/null | head -20

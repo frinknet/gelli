@@ -16,13 +16,13 @@ RUN cmake -B build -DCMAKE_BUILD_TYPE=Release
 RUN cmake --build build --config Release -j$(nproc)
 
 # Add gelli tools
-COPY tools/gelli* /src/build/bin/
+COPY core/gelli* /src/build/bin/
 RUN chmod +x /src/build/bin/*
 
 # Final lean stage
 FROM alpine:latest
 RUN apk add --no-cache jq vim git curl libstdc++ libgomp && \
-    mkdir -p /models /loras /work /usr/local/lib
+    mkdir -p /models /loras /work /tools /usr/local/lib
 
 # Set version
 ARG VERSION
@@ -34,6 +34,9 @@ COPY --from=build /src/build/bin/* /usr/local/bin/
 
 # Copy ALL shared libraries in one layer  
 COPY --from=build /src/build/bin/*.so /usr/local/lib/
+
+# Add tools directory
+COPY tools/* /tools/
 
 # Set defaults environment
 ENV ENV=/.env \
