@@ -112,7 +112,7 @@ update)
     *)              BRANCH=\$VER ;;
   esac
 
-  curl -fsSL "https://github.com/${REPO#*/}/raw/\$BRANCH/install.sh" | sh -s -- "\$VER"
+  curl -fsSL "https://github.com/${REPO#*/}/raw/\$BRANCH/install.sh" | exec sh -s -- "\$VER"
 
   ;;
 shell)
