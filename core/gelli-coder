@@ -51,7 +51,6 @@ POST=$(jq -c '.' <<EOF
 EOF
 )
 
-echo "$API"
 curl -s "$API/v1/chat/completions" \
   -H "Authorization: Bearer $KEY" \
   -H "Content-Type: application/json" \
@@ -150,7 +149,6 @@ for iter in $(seq 1 "$MAX"); do
   response=$(call-ai "$messages")
 
   echo $response
-  exit
 
   fn_name=$(echo "$response" | jq -r '.choices[0].message.function_call.name // empty')
   fn_args=$(echo "$response" | jq -r '.choices[0].message.function_call.arguments')
