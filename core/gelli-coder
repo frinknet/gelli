@@ -45,13 +45,13 @@ call-ai() {
 {
   "model":"$MODEL",
   "messages":$1,
-  "functions":$FUNCTIONS, "function_call":"auto" }
+  "functions":$FUNCTIONS,
+  "function_call":"auto"
+}
 EOF
 )
 
-  echo POST="$POST"
-
-  curl -s "$API" \
+  echo curl -s "$API" \
     -H "Authorization: Bearer $KEY" \
     -H "Content-Type: application/json" \
     -d "$POST"
