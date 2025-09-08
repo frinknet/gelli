@@ -48,6 +48,7 @@ cleanup() {
 trap cleanup EXIT SIGTERM SIGINT
 
 call-ai() {
+  echo "calling ai" > 2
   curl -sN "$API/v1/chat/completions" \
     -H "Authorization: Bearer $KEY" \
     -H "Content-Type: application/json" \
@@ -172,16 +173,24 @@ for iter in $(seq 1 "$MAX"); do
       if [ -n "$fn_name" ]; then
         printf "${C_TOOL}%s(%s)${C_RESET}" "$fn_name" "${fn_args}"
 
-        result=$(call-fn "$fn_name" "${fn_args}")
+        echo "calling $fn_name" > 2
+        result=$(call-fn "$fn_name" "${fn_args:-'{}'}")
 
         printf "→ ${C_THINK}%s${C_RESET}\n\n" "$result"
+
+        echo "parsing result" > 2
 
         # Build messages with proper JSON validation
         call_msg=$(jq -nc --arg name "$fn_name" --argjson args "${fn_args:-'{}'}" '{role:"assistant",tool_calls:[{function:{name:$name,arguments:$args}}]}')
         result_msg=$(jq -nc --arg name "$fn_name" --arg res "$result" '{role:"tool",name:$name,content:$res}')
+
+        echo "preparing args" > 2
+
         messages=$(jq -nc --argjson m "$messages" --argjson c "$call_msg" --argjson r "$result_msg" '$m + [$c,$r]')
       fi
     fi
+
+    #TODO: allow interaction
 
     # Check for completion
     if [ -n "$(echo "$line" | jq -e '.choices[0].finish_reason')" ]; then
