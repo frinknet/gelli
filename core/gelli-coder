@@ -51,7 +51,8 @@ POST=$(jq -c '.' <<EOF
 EOF
 )
 
-curl -s "$API" \
+echo "$API"
+curl -s "$API/v1/chat/completions" \
   -H "Authorization: Bearer $KEY" \
   -H "Content-Type: application/json" \
   -d "$POST"
@@ -127,7 +128,7 @@ if [ -z "$GELLI_API_URL" ]; then
 
   SERVER_PID=$!
 
-  until curl -sf http://localhost:"$PORT"/health >/dev/null; do
+  until curl -sf "$API/health" > /dev/null; do
     sleep 0.2
   done
 fi
