@@ -144,7 +144,7 @@ for iter in $(seq 1 "$MAX"); do
   response=$(call-ai "$messages")
 
   echo $response
-  echo
+  exit
 
   fn_name=$(echo "$response" | jq -r '.choices[0].message.function_call.name // empty')
   fn_args=$(echo "$response" | jq -r '.choices[0].message.function_call.arguments')
