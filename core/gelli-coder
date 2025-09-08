@@ -5,13 +5,13 @@ set -e
 #
 # gelli coder [model] [loras...] [-- prompt] - Run model inference with specified prompt and optional LoRAs
 #
-#   MODEL defaults to $GELLI_MODEL or ol:qwen2.5-Coder:0.5b-Instruct
-#   LORAS defaults to $GELLI_LORAS (space separated)
+#		MODEL defaults to $GELLI_MODEL or ol:qwen2.5-Coder:0.5b-Instruct
+#		LORAS defaults to $GELLI_LORAS (space separated)
 #
-#   Examples:
+#		Examples:
 #
-#     gelli coder ol:qwen3:0.6b -- "Review the code base"
-#     cat file  |  gelli prompt ol:qwen2.5-Coder:0.5b-Instruct -- "can you do something with this"
+#			gelli coder ol:qwen3:0.6b -- "Review the code base"
+#			cat file	|  gelli prompt ol:qwen2.5-Coder:0.5b-Instruct -- "can you do something with this"
 
 CTX_SIZE=${GELLI_CTX_SIZE:-0}
 BATCH_SIZE=${GELLI_BATCH_SIZE:-512}
@@ -29,140 +29,145 @@ KEY=${GELLI_API_KEY:-GELLI}
 MAX=${GELLI_MAY_CALLS:-25}
 
 cleanup() {
-    cd /work
+		cd /work
 
-    [ -n "$SERVER_PID" ] && kill "$SERVER_PID" 2>/dev/null || true
+		[ -n "$SERVER_PID" ] && kill "$SERVER_PID" 2>/dev/null || true
 
-    wait "$SERVER_PID" 2>/dev/null || true
+		wait "$SERVER_PID" 2>/dev/null || true
 
-    [ -d "/tmp/$BRANCH" ] && git worktree remove --force "/tmp/$BRANCH" 2>/dev/null || true
+		[ -d "/tmp/$BRANCH" ] && git worktree remove --force "/tmp/$BRANCH" 2>/dev/null || true
 }
 trap cleanup EXIT SIGTERM SIGINT
 
 call-ai() {
-  curl -s "$API" \
-    -H "Authorization: Bearer $KEY" \
-    -H "Content-Type: application/json" \
-    -d @- <<EOF
+	POST=$(cat <<EOF
 {
-  "model":"$MODEL",
-  "messages":$1,
-  "functions":$(list-fn),
-  "function_call":"auto"
+	"model":"$MODEL",
+	"messages":$1,
+	"functions":$(list-fn),
+	"function_call":"auto"
 }
 EOF
+)
+
+	echo POST="$POST"
+
+	curl -s "$API" \
+		-H "Authorization: Bearer $KEY" \
+		-H "Content-Type: application/json" \
+		-d "$POST"
 }
 
 call-fn() {
-  [ -f "/tools/$1" ] && exec "/tools/$1" "$2"
-  [ "$1" = "date" ] && exec date
+	[ -f "/tools/$1" ] && exec "/tools/$1" "$2"
+	[ "$1" = "date" ] && exec date
 
-  echo "Error: unknown tool '$1'"
+	echo "Error: unknown tool '$1'"
 }
 
 list-fn() {
-  grep '^# DEF: ' /tools/* | sed 's/^# DEF: //' | jq -R 'fromjson? | select(.)' | jq -s '.'
+	grep '^# DEF: ' /tools/* | sed 's/^# DEF: //' | jq -R 'fromjson? | select(.)' | jq -s '.'
 }
 
 work-dir() {
-  local dir="/tmp/$BRANCH"
+	local dir="/tmp/$BRANCH"
 
-  git worktree prune 2>/dev/null || true
-  git worktree add --force "$dir"
-  cd "$dir"
+	git worktree prune 2>/dev/null || true
+	git worktree add --force "$dir"
+	cd "$dir"
 
-  # Try to switch, create if doesn't exist
-  git switch "$BRANCH" 2>/dev/null || git switch -c "$BRANCH"
+	# Try to switch, create if doesn't exist
+	git switch "$BRANCH" 2>/dev/null || git switch -c "$BRANCH"
 }
 
 while [ $# -gt 0 ]; do
-  case $1 in
-    --)
-      shift
+	case $1 in
+		--)
+			shift
 
-      if [ -z "$PROMPT" ]; then
-        PROMPT="$*"
-      else
-        PROMPT="$PROMPT\n\n$*"
-      fi
+			if [ -z "$PROMPT" ]; then
+				PROMPT="$*"
+			else
+				PROMPT="$PROMPT\n\n$*"
+			fi
 
-      break
-      ;;
-    *)
-      if [ -z "$MODEL" ]; then
-        MODEL="$1"
-      else
-        LORAS="$LORAS $1"
-      fi
-      ;;
-  esac
+			break
+			;;
+		*)
+			if [ -z "$MODEL" ]; then
+				MODEL="$1"
+			else
+				LORAS="$LORAS $1"
+			fi
+			;;
+	esac
 
-  shift
+	shift
 done
 
 if [ -z "$MODEL" ]; then
-  MODEL=${GELLI_MODEL:-$GELLI_DEFAULT}
-  LORAS=${GELLI_LORAS:-}
+	MODEL=${GELLI_MODEL:-$GELLI_DEFAULT}
+	LORAS=${GELLI_LORAS:-}
 fi
 
 if [ -z "$PROMPT" ]; then
-  echo "Missing prompt..."
-  exit 1
+	echo "Missing prompt..."
+	exit 1
 fi
 
 MODEL=$(gelli-models download $MODEL)
 LORAS=$(gelli-loras download $LORAS)
 
 if [ -n "$LORAS" ]; then
-  for f in $LORAS; do FLAGS="$FLAGS --lora /loras/$f.gguf"; done
+	for f in $LORAS; do FLAGS="$FLAGS --lora /loras/$f.gguf"; done
 fi
 
 if [ -z "$GELLI_API_URL" ]; then
-  gelli-serve $MODEL $LORAS > /dev/null 2>&1 &
+	gelli-serve $MODEL $LORAS > /dev/null 2>&1 &
 
-  SERVER_PID=$!
+	SERVER_PID=$!
 fi
 
 work-dir
 
 # Initialize chat history
 messages='[
-  {"role":"system","content":"'"$GELLI_SYSTEM_PROMPT"'"},
-  {"role":"user","content":"'"$PROMPT"'"}
+	{"role":"system","content":"'"$GELLI_SYSTEM_PROMPT"'"},
+	{"role":"user","content":"'"$PROMPT"'"}
 ]'
 
 echo $messages
 
 for iter in $(seq 1 "$MAX"); do
-  echo "=== $iter / $MAX ==="
-  # Call AI with function schemas
-  response=$(call-ai "$messages")
+	echo "=== $iter / $MAX ==="
+	# Call AI with function schemas
+	response=$(call-ai "$messages")
 
-  echo $response
-  echo
+	echo $response
+	echo
 
-  fn_name=$(echo "$response" | jq -r '.choices[0].message.function_call.name // empty')
-  fn_args=$(echo "$response" | jq -r '.choices[0].message.function_call.arguments')
+	fn_name=$(echo "$response" | jq -r '.choices[0].message.function_call.name // empty')
+	fn_args=$(echo "$response" | jq -r '.choices[0].message.function_call.arguments')
 
-  if [ -z "$fn_name" ] || [ "$fn_name" = "null" ]; then
-    assistant=$(echo "$response" | jq -r '.choices[0].message.content')
+	if [ -z "$fn_name" ] || [ "$fn_name" = "null" ]; then
+		assistant=$(echo "$response" | jq -r '.choices[0].message.content')
 
-    echo -e "$assistant"
-    exit 0
-  fi
+		echo -e "$assistant"
+		exit 0
+	fi
 
-  # Execute requested tool
-  result=$(call-fn "$fn_name" "$fn_args")
+	# Execute requested tool
+	result=$(call-fn "$fn_name" "$fn_args")
 
-  echo "$fn_name($fn_args)"
-  echo
-  echo $result
-  echo
+	echo "$fn_name($fn_args)"
+	echo
+	echo $result
+	echo
 
-  # Append call and result to messages
-  call_msg=$(jq -nc --arg name "$fn_name" --arg args "$fn_args" '{role:"assistant",function_call:{name:$name,arguments:($args|fromjson)}}')
-  result_msg=$(jq -nc --arg name "$fn_name" --arg res "$result" '{role:"function",name:$name,content:$res}')
-  messages=$(jq -nc --argjson m "$messages" --argjson c "$call_msg" --argjson r "$result_msg" '$m + [$c,$r]')
+	# Append call and result to messages
+	call_msg=$(jq -nc --arg name "$fn_name" --arg args "$fn_args" '{role:"assistant",function_call:{name:$name,arguments:($args|fromjson)}}')
+	result_msg=$(jq -nc --arg name "$fn_name" --arg res "$result" '{role:"function",name:$name,content:$res}')
+	messages=$(jq -nc --argjson m "$messages" --argjson c "$call_msg" --argjson r "$result_msg" '$m + [$c,$r]')
 done
 
 echo "⚠️  Reached max iterations ($MAX) without final response." >&2
