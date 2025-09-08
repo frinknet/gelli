@@ -137,6 +137,7 @@ messages='[
 ]'
 
 echo $messages
+echo $FUNCTIONS
 
 for iter in $(seq 1 "$MAX"); do
   echo "=== $iter / $MAX ==="
