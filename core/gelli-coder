@@ -65,7 +65,7 @@ call-fn() {
 }
 
 list-fn() {
-  grep '^# DEF: ' /tools/* #| sed 's/^# DEF: //' | jq -R 'fromjson? | select(.)' | jq -s '.'
+  grep '^# DEF: ' /tools/* | sed 's/^# DEF: //' #| jq -R 'fromjson? | select(.)' | jq -s '.'
 }
 
 work-dir() {
