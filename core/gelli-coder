@@ -31,11 +31,11 @@ MAX=${GELLI_MAY_CALLS:-25}
 cleanup() {
     cd /work
 
-    [ -n "$SERVER_PID" ] && kill "$SERVER_PID" 2>/dev/null
+    [ -n "$SERVER_PID" ] && kill "$SERVER_PID" 2>/dev/null || true
 
     wait "$SERVER_PID" 2>/dev/null
 
-    [ -d "/tmp/$BRANCH" ] && git worktree remove force "/tmp/$BRANCH"
+    [ -d "/tmp/$BRANCH" ] && git worktree remove force "/tmp/$BRANCH" 2>/dev/null || true
 }
 trap cleanup EXIT SIGTERM SIGINT
 
