@@ -22,8 +22,12 @@ if [ -n "$LORAS" ]; then
 fi
 
 exec llama-server --model "/models/${MODEL##*/}.gguf" $FLAGS \
-  --ctx-size $CTX_SIZE \
   --batch-size $BATCH_SIZE \
+  --ctx-size $CTX_SIZE \
   --predict $OUTPUT_SIZE \
   --port "$PORT" \
-  --temp $TEMP
+  --temp $TEMP \
+  --jinja \
+  --no-warmup \
+  --flash-attn on \
+  --gpu-layers 99

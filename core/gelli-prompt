@@ -70,8 +70,11 @@ exec llama-cli --model "/models/${MODEL##*/}.gguf" $FLAGS \
   --predict $OUTPUT_SIZE \
   --prompt "$PROMPT" \
   --temp $TEMP \
+  --jinja \
   --simple-io \
   --no-warmup \
   --single-turn \
+  --flash-attn on \
+  --gpu-layers 99 \
   --no-conversation \
   2>/dev/null #| sed '1d; 2s/^> //; /^> EOF by user$/d'
