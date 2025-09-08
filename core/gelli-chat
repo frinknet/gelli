@@ -56,10 +56,11 @@ if [ -n "$LORAS" ]; then
 fi
 
 exec llama-cli --model "/models/${MODEL##*/}.gguf" $FLAGS \
-  --ctx-size $CTX_SIZE \
   --batch-size $BATCH_SIZE \
-  -n $OUTPUT_SIZE \
+  --ctx-size $CTX_SIZE \
+  -predict $OUTPUT_SIZE \
   --temp $TEMP \
+  --jinja \
   --color \
   --conversation \
   --no-display-prompt \
