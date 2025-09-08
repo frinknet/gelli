@@ -45,7 +45,9 @@ call-ai() {
 {
   "model":"$MODEL",
   "messages":$1,
-  "functions":$FUNCTIONS, "function_call":"auto" } EOF)
+  "functions":$FUNCTIONS, "function_call":"auto" }
+EOF
+)
 
   echo POST="$POST"
 
