@@ -23,6 +23,7 @@ LORAS=""
 FLAGS="$GELLI_LLAMA_FLAGS"
 PROMPT=""
 BRANCH="${GELLI_BRANCH:-gelli-coder}"
+FUNCTIONS=""
 
 API=${GELLI_API_URL:-http://localhost:$PORT}
 KEY=${GELLI_API_KEY:-GELLI}
@@ -44,11 +45,7 @@ call-ai() {
 {
   "model":"$MODEL",
   "messages":$1,
-  "functions":$(list-fn),
-  "function_call":"auto"
-}
-EOF
-)
+  "functions":$FUNCTIONS, "function_call":"auto" } EOF)
 
   echo POST="$POST"
 
@@ -117,6 +114,7 @@ fi
 
 MODEL=$(gelli-models download $MODEL)
 LORAS=$(gelli-loras download $LORAS)
+FUNCTIONS=$(list-fn)
 
 if [ -n "$LORAS" ]; then
   for f in $LORAS; do FLAGS="$FLAGS --lora /loras/$f.gguf"; done
