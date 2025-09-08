@@ -12,11 +12,11 @@ cd $(git rev-parse --show-toplevel 2>/dev/null || echo ".")
 # Set memory
 if [ -z "${GELLI_MEMORY:-}" ]; then
   # Auto-detect leave 20% for system
-  GELLI_MEMORY=$(awk '/MemAvailable/ {print int($2/1024)}' /proc/meminfo 2>/dev/null || echo "4000")
-  GELLI_MEMORY=$((GELLI_MEMORY * 4 / 5))
+  export GELLI_MEMORY=$(awk '/MemAvailable/ {print int($2/1024)}' /proc/meminfo 2>/dev/null || echo "4000")
+  export GELLI_MEMORY=$((GELLI_MEMORY * 4 / 5))
 else
   # Parse from .env value
-  GELLI_MEMORY=$(echo "$GELLI_MEMORY" | awk '
+  export GELLI_MEMORY=$(echo "$GELLI_MEMORY" | awk '
   {
     if (match($0, /^([0-9]+)(.*)/, arr)) {
       num = arr[1]
