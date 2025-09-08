@@ -41,7 +41,7 @@ cleanup() {
 trap cleanup EXIT SIGTERM SIGINT
 
 call-ai() {
-  POST=$(cat <<EOF
+  POST=$(jq -c '.' <<EOF
 {
   "model":"$MODEL",
   "messages":$1,
@@ -137,8 +137,6 @@ messages='[
 ]'
 
 echo $messages
-echo $FUNCTIONS
-exit
 
 for iter in $(seq 1 "$MAX"); do
   echo "=== $iter / $MAX ==="
