@@ -67,7 +67,8 @@ list-fn() {
 work-dir() {
   local dir="/tmp/$BRANCH"
 
-  git worktree add "$dir"
+  git worktree prune 2>/dev/null || true
+  git worktree add --force "$dir"
   cd "$dir"
 
   # Try to switch, create if doesn't exist
