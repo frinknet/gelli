@@ -131,12 +131,15 @@ messages='[
   {"role":"user","content":"'"$PROMPT"'"}
 ]'
 
+echo $messages
+
 for iter in $(seq 1 "$MAX"); do
   echo "=== $iter / $MAX ==="
   # Call AI with function schemas
   response=$(call-ai "$messages")
 
-  #TODO show chain of thougha
+  echo $response
+  echo
 
   fn_name=$(echo "$response" | jq -r '.choices[0].message.function_call.name // empty')
   fn_args=$(echo "$response" | jq -r '.choices[0].message.function_call.arguments')
@@ -150,6 +153,11 @@ for iter in $(seq 1 "$MAX"); do
 
   # Execute requested tool
   result=$(call-fn "$fn_name" "$fn_args")
+
+  echo "$fn_name($fn_args)"
+  echo
+  echo $result
+  echo
 
   # Append call and result to messages
   call_msg=$(jq -nc --arg name "$fn_name" --arg args "$fn_args" '{role:"assistant",function_call:{name:$name,arguments:($args|fromjson)}}')
