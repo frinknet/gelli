@@ -13,4 +13,45 @@
 curl -fsSL https://github.com/frinknet/gelli/raw/main/install.sh | sh
 ```
 
-just install and it will do the rest...
+Or you can install a different version (even `develop` or `preview`) by adding a version:
+
+```bash
+curl -fsSL https://github.com/frinknet/gelli/raw/main/install.sh | sh -s -- $VER
+```
+
+Once installed, keeping things up to date is easy by running: (Note you can change version numbers but it defaults to latest)
+
+```bash
+gelli update $VER
+```
+
+# Managing Models & LoRAs
+
+Internally GELLI manages its own models. It is really meant to be a general purpose runner for just about anything you can think of...
+
+TODO - Write about DL from HF or OL or MR
+TODO - write about importting models and loras
+
+
+# Running your Models
+
+TODO Explain prompt one shot
+TODO Explain serve models
+TODO Explain using aLoRAs
+
+# Creating Agentic Systems
+
+TODO Explain agent workflow
+TODO Explain adding more tools
+TODO Explain adding agent memory
+TODO Explain adding interfaces
+TODO Explain adding endpoints
+
+# Developing your Own Models
+
+TODO - Write about training LoRAs
+TODO - Write about testing your LoRA
+TODO - Write about merging into base models
+TODO - Write about exporting models and loras
+
+
