@@ -26,11 +26,16 @@ BRANCH="${GELLI_BRANCH:-gelli-coder}"
 
 API=${GELLI_API_URL:-http://localhost:$PORT}
 KEY=${GELLI_API_KEY:-GELLI}
-MAX=${GELLI_MAY_TRYS:-12}
+MAX=${GELLI_MAY_CALLS:-25}
 
 cleanup() {
+    cd /work
+
     [ -n "$SERVER_PID" ] && kill "$SERVER_PID" 2>/dev/null
-        wait "$SERVER_PID" 2>/dev/null
+
+    wait "$SERVER_PID" 2>/dev/null
+
+    [ -d "/tmp/$BRANCH" ] && git worktree remove force "/tmp/$BRANCH"
 }
 trap cleanup EXIT SIGTERM SIGINT
 
@@ -59,11 +64,10 @@ list-fn() {
   grep '^# DEF: ' /tools/* | sed 's/^# DEF: //' | jq -R 'fromjson? | select(.)' | jq -s '.'
 }
 
-setup-worktree() {
-  dir="/worktree/$BRANCH"
+work-dir() {
+  local dir="/tmp/$BRANCH"
 
-  mkdir -p "$dir"
-  git add worktree "$dir"
+  git worktree add "$dir" "$BRANCH"
   cd "$dir"
 
   # Try to switch, create if doesn't exist
@@ -94,6 +98,7 @@ while [ $# -gt 0 ]; do
 
   shift
 done
+
 if [ -z "$MODEL" ]; then
   MODEL=${GELLI_MODEL:-$GELLI_DEFAULT}
   LORAS=${GELLI_LORAS:-}
@@ -117,7 +122,7 @@ if [ -z "$GELLI_API_URL" ]; then
   SERVER_PID=$!
 fi
 
-setup-worktree
+work-dir
 
 # Initialize chat history
 messages='[

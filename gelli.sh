@@ -94,12 +94,12 @@ shell)
     -e GELLI_MEMORY \
     -e GELLI_API_URL \
     -e GELLI_API_KEY \
-    -e GELLI_MAX_TRYS \
     -e GELLI_CTX_SIZE \
     -e GELLI_BATCH_SIZE \
     -e GELLI_OUTPUT_SIZE \
-    -e GELLI_LLAMA_FLAGS \
     -e GELLI_SYSTEM_PROMPT \
+    -e GELLI_LLAMA_FLAGS \
+    -e GELLI_MAX_CALLS \
     -e TERM \
     "$IMAGE"
   ;;
@@ -117,12 +117,12 @@ shell)
     -e GELLI_MEMORY \
     -e GELLI_API_URL \
     -e GELLI_API_KEY \
-    -e GELLI_MAX_TRYS \
     -e GELLI_CTX_SIZE \
     -e GELLI_BATCH_SIZE \
     -e GELLI_OUTPUT_SIZE \
-    -e GELLI_LLAMA_FLAGS \
     -e GELLI_SYSTEM_PROMPT \
+    -e GELLI_LLAMA_FLAGS \
+    -e GELLI_MAX_CALLS \
     -e TERM \
     "$IMAGE" "$@"
   ;;
