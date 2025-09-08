@@ -41,7 +41,7 @@ cleanup() {
 trap cleanup EXIT SIGTERM SIGINT
 
 call-ai() {
-  POST=$(jq -c '.' <<EOF
+POST=$(jq -c '.' <<EOF
 {
   "model":"$MODEL",
   "messages":$1,
@@ -51,10 +51,10 @@ call-ai() {
 EOF
 )
 
-  curl -s "$API" \
-    -H "Authorization: Bearer $KEY" \
-    -H "Content-Type: application/json" \
-    -d "$POST"
+curl -s "$API" \
+  -H "Authorization: Bearer $KEY" \
+  -H "Content-Type: application/json" \
+  -d "$POST"
 }
 
 call-fn() {
