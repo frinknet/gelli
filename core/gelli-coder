@@ -51,7 +51,7 @@ call-ai() {
 EOF
 )
 
-  echo curl -s "$API" \
+  curl -s "$API" \
     -H "Authorization: Bearer $KEY" \
     -H "Content-Type: application/json" \
     -d "$POST"
