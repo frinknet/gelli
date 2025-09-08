@@ -137,11 +137,12 @@ for iter in $(seq 1 "$MAX"); do
 
   #TODO show chain of thougha
 
-  fn_name=$(jq -r '.choices[0].message.function_call.name // empty' <<<"$response")
-  fn_args=$(jq -r '.choices[0].message.function_call.arguments' <<<"$response")
+  fn_name=$(echo "$response" | jq -r '.choices[0].message.function_call.name // empty')
+  fn_args=$(echo "$response" | jq -r '.choices[0].message.function_call.arguments')
 
-  if [[ -z "$fn_name" || "$fn_name" == "null" ]]; then
-    assistant=$(jq -r '.choices[0].message.content' <<<"$response")
+  if [ -z "$fn_name" ] || [ "$fn_name" = "null" ]; then
+    assistant=$(echo "$response" | jq -r '.choices[0].message.content')
+
     echo -e "$assistant"
     exit 0
   fi
