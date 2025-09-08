@@ -136,7 +136,7 @@ work-dir
 
 # Initialize chat history
 messages='[
-  {"role":"system","content":"'"$GELLI_SYSTEM_PROMPT"'"},
+  {"role":"system","content":"'"${GELLI_SYSTEM_PROMPT:-You are a coding assistant with access to tools via function calls. Use these tools to fulfil the users request. If you don't se the tools tell the user.}"'"},
   {"role":"user","content":"'"$PROMPT"'"}
 ]'
 
