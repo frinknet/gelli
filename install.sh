@@ -37,7 +37,7 @@ docker volume inspect gelli-loras >/dev/null 2>&1 || docker volume create gelli-
 WRAP="$PREFIX/$IMAGE"
 
   case "$VER" in
-    v[0-9]*.[0-9]*) BRANCH=main ;;
+    v[0-9]*.[0-9]*|latest) BRANCH=main ;;
     *)              BRANCH=$VER ;;
   esac
 
