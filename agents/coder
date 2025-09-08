@@ -1,0 +1,11 @@
+AGENT_NAME="coder"
+AGENT_DESC="Generic coder agent fluent in many languages"
+AGENT_PROMPT="You are an expert coder with a strict focus on the users needs."
+
+AGENT_API_URL=""
+AGENT_API_KEY=""
+
+AGENT_MODEL=""
+AGENT_LORAS=""
+AGENT_TOOLS="tree find rgrep read write"
+AGENT_AGENTS="manager "
