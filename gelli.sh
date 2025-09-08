@@ -18,7 +18,7 @@ else
   # Parse from .env value
   GELLI_MEMORY=$(echo "$GELLI_MEMORY" | awk '
   {
-    if (match(sh, /^([0-9]+)(.*)/, arr)) {
+    if (match($0, /^([0-9]+)(.*)/, arr)) {
       num = arr[1]
       unit = tolower(arr[2])
       
@@ -73,7 +73,7 @@ update)
 
   case "$VER" in
     v[0-9]*.[0-9]*|latest) BRANCH=main ;;
-    *)              BRANCH=$VER ;;
+    *) BRANCH=$VER ;;
   esac
 
   curl -fsSL "https://github.com/${REPO#*/}/raw/$BRANCH/install.sh" | exec sh -s -- "$VER"
