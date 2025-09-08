@@ -140,8 +140,6 @@ messages='[
   {"role":"user","content":"'"$PROMPT"'"}
 ]'
 
-echo $messages
-
 for iter in $(seq 1 "$MAX"); do
   echo "=== $iter / $MAX ==="
 
