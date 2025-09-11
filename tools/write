@@ -14,8 +14,8 @@ comment=$(echo "${1:-"{}"}" | jq -r '.comment // empty')
 mkdir -p "$(dirname "$filename")"
 printf '%s' "$contents" > "$filename"
 
-git reset --hard
-git add "$filename"
+git reset --hard >//dev/null || true
+git add "$filename" >//dev/null || true
 git commit -m "$comment" || echo "Warning: commit failed"
 
 echo "✓ Written to $filename and committed to git."

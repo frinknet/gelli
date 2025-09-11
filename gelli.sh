@@ -4,10 +4,11 @@ set -eu
 REPO="ghcr.io/frinknet/gelli"
 IMAGE="${REPO##*/}"
 VERSION="latest"
-
-cd $(git rev-parse --show-toplevel 2>/dev/null || echo ".")
+GITROOT=$(git rev-parse --show-toplevel 2>/dev/null)
 
 [ -f ".env" ] && source .env
+
+cd "${GITROOT:-.}"
 
 # Set memory
 if [ -z "${GELLI_MEMORY:-}" ]; then
