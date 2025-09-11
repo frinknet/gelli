@@ -3,7 +3,7 @@ set -eu
 
 # DEF: {"name":"tree","description":"List directory structure with depth limit of 3","parameters":{"type":"object","properties":{"dir":{"type":"string","default":".", "description":"Directory to explore"}},"required":[]}}
 
-dir=$(echo "${1:-"{}"}" | jq -n '.dir // "."')
+dir=$(echo "${1:-"{}"}" | jq -r '.dir // "."')
 
 if [ ! -d "$dir" ]; then
   echo "Error: directory not found"

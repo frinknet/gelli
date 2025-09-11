@@ -3,13 +3,18 @@ set -eu
 
 # DEF: {"name":"write","description":"Write content to file and commit to git","parameters":{"type":"object","properties":{"filename":{"type":"string","description":"File path to write"},"contents":{"type":"string","description":"File contents"},"comment":{"type":"string","description":"Git commit message"}},"required":["filename","contents","comment"]}}
 
-filename=$(echo "$1" | jq -r '.filename')
-contents=$(echo "$1" | jq -r '.contents')
-comment= $(echo "$1" | jq -r '.comment')
+filename=$(echo "${1:-"{}"}" | jq -r '.filename // empty')
+contents=$(echo "${1:-"{}"}" | jq -r '.contents // empty')
+comment=$(echo "${1:-"{}"}" | jq -r '.comment // empty')
+
+[ -z "$filename" ] && { echo "Error: empty filename"; exit 1; }
+[ -z "$contensts" ] && { echo "Error: empty contensts"; exit 1; }
+[ -z "$comment" ] && { echo "Error: empty comment"; exit 1; }
 
 mkdir -p "$(dirname "$filename")"
 printf '%s' "$contents" > "$filename"
 
+git reset --hard
 git add "$filename"
 git commit -m "$comment" || echo "Warning: commit failed"
 

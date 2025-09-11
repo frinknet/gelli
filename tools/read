@@ -3,8 +3,11 @@ set -eu
 
 # DEF: {"name":"read","description":"Read file contents","parameters":{"type":"object","properties":{"filename":{"type":"string","description":"File path to read"}},"required":["filename"]}}
 
-filename=$(echo "$1" | jq -r '.filename')
+filename=$(echo "${1:-"{}"}" | jq -r '.filename // empty')
 
-[ ! -f "$filename" ] && { echo "Error: File '$filename' not found"; exit 1; }
+[ -z "$filename" ] && { echo "Error: empty filename"; exit 1; }
+[ ! -e "$filename" ] && { echo "Error: file not found"; exit 1; }
 
-head -100 "$filename"
+#todo check for size
+
+cat "$filename"
