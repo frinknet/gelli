@@ -4,8 +4,8 @@ set -euo pipefail
 
 # DEF: {"name":"find","description":"Find files by name pattern","parameters":{"type":"object","properties":{"filename":{"type":"string","description":"Filename pattern to search"},"dir":{"type":"string","description":"Directory to search","default":"."}},"required":["filename"]}}
 
-filename=$(jq -r '.filename' <<< "$1")
-dir=$(jq -r '.dir // "."' <<< "$1")
+filename=$(echo "$1" | jq -r '.filename')
+dir=$(echo "$1" | jq -r '.dir // "."')
 
 [ ! -d "$dir" ] && { echo "Error: Directory '$dir' not found\"; exit 1; }
 

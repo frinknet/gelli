@@ -81,7 +81,6 @@ update)
   ;;
 shell)
   exec docker run -it --entrypoint sh \
-    -u $(id -u):$(id -g) \
     -m ${GELLI_MEMORY}m \
     -v "$PWD:/work" \
     -v ~/.vimrc:/root/.vimrc \
