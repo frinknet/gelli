@@ -30,7 +30,7 @@ KEY=${GELLI_API_KEY:-GELLI}
 MAX=${GELLI_MAY_CALLS:-25}
 
 # Color codes
-C_THINK="\e[33m"    # yellow
+C_THINK="\e[31m"    # yellow
 C_USER="\e[36m"     # cyan
 C_ASSIST="\e[32m"   # green
 C_TOOL="\e[35m"     # magenta
@@ -48,15 +48,14 @@ cleanup() {
 trap cleanup EXIT SIGTERM SIGINT
 
 call-ai() {
-  echo "calling ai" > 2
   curl -sN "$API/v1/chat/completions" \
     -H "Authorization: Bearer $KEY" \
     -H "Content-Type: application/json" \
     -d "$(jq -c -n \
-      --arg m "$MODEL" \
-      --argjson msgs "$1" \
+      --arg model "$MODEL" \
+      --argjson messages "$messages" \
       --argjson tools "$TOOLS" \
-      '{model:$m,messages:msgs,tools:tools,tool_choice:"auto",stream:true}')"
+      '{model:$model,messages:$messages,tools:$tools,tool_choice:"auto",stream:true}')"
 }
 
 call-fn() {
@@ -67,10 +66,12 @@ call-fn() {
 }
 
 list-fn() {
-  grep '^# DEF: ' /tools/* | sed 's/^.*DEF: //' | jq -R 'fromjson? | select(.)' | jq -sc '.'
+  grep '^# DEF: ' /tools/* | sed 's/^.*DEF: //' | jq -R 'fromjson? | select(.) | {"type":"function","function":.}' | jq -sc '.'
 }
 
 work-dir() {
+  [ -d ".git" ] || return
+
   local dir="/tmp/$BRANCH"
 
   git worktree prune 2>/dev/null || true
@@ -118,7 +119,7 @@ fi
 
 MODEL=$(gelli-models download $MODEL)
 LORAS=$(gelli-loras download $LORAS)
-TOOLS=$(list-fn)
+export TOOLS=$(list-fn)
 
 if [ -n "$LORAS" ]; then
   for f in $LORAS; do FLAGS="$FLAGS --lora /loras/$f.gguf"; done
@@ -138,34 +139,32 @@ work-dir
 
 # Initialize chat history
 messages='[
-  {"role":"system","content":"'"${GELLI_SYSTEM_PROMPT:-You are a coding assistant with access to several tools. Use these tools to fulfill the users request. If you don\'t sse the tools tell the user.}"'"},
+  {"role":"system","content":"'"${GELLI_SYSTEM_PROMPT:-"You are a coding assistant with access to several tools. Use these tools to fulfill the users request. If you don't see the tools tell the user."}"'"},
   {"role":"user","content":"'"$PROMPT"'"}
 ]'
-
-echo "$TOOLS"
 
 for iter in $(seq 1 "$MAX"); do
   echo "=== $iter / $MAX ==="
 
-  while IFS= read -r line; do
-    [ -z "$line" ] && continue
+  while IFS= read -r data; do
+    [ -z "$data" ] && continue
 
-    delta=$(echo "$line" | jq -c '.choices[0].delta')
+    delta=$(echo "${data#data: }" | jq -c '.choices[0].delta')
 
-    # Partial assistant content with think tag replacement
-    if content=$(echo "$delta" | jq -r '.content // empty'); [ -n "$content" ]; then
-      # Replace thinking tags with color codes
-      content="${content/<think>/${C_THINK}}"
-      content="${content/<\/think>/${C_ASSIST}}"
-
+    # Reasoning
+    if reasoning=$(echo "$delta" | jq -r '.reasoning_content // empty'); [ -n "$reasoning" ]; then
+      printf "${C_THINK}%s${C_RESET}" "$reasoning"
+    # Talking
+    elif content=$(echo "$delta" | jq -r '.content // empty'); [ -n "$content" ]; then
       printf "${C_ASSIST}%s${C_RESET}" "$content"
+    else
+      printf "%s" $data
     fi
 
-
     # Extract and validate fn_args
-    call=$(echo "$delta" | jq -c '.tool_calls[0] // empty')
+    if call=$(echo "$delta" | jq -c '.tool_calls[0] // empty'); [ -n "$call" ]; then
+      echo "call: $call"
 
-    if [ -n "$call" ]; then
       fn_name=$(echo "$call" | jq -r '.function.name // empty')
       fn_args=$(echo "$call" | jq -c '.function.arguments // empty')
 
@@ -186,7 +185,7 @@ for iter in $(seq 1 "$MAX"); do
 
         echo "preparing args" > 2
 
-        messages=$(jq -nc --argjson m "$messages" --argjson c "$call_msg" --argjson r "$result_msg" '$m + [$c,$r]')
+        messages=$(jq -nc --argjson messages "$messages" --argjson call "$call_msg" --argjson result "$result_msg" '$messages + [$call,$result]')
       fi
     fi
 
@@ -199,6 +198,7 @@ for iter in $(seq 1 "$MAX"); do
       break 2  # Exit both loops
     fi
   done < <(call-ai "$messages")
+echo
 done
 
 echo "⚠️  Reached max iterations ($MAX) without final response." >&2
