@@ -48,21 +48,26 @@ cleanup() {
 trap cleanup EXIT SIGTERM SIGINT
 
 call-ai() {
+  local post=$(jq -c -n \
+      --arg model "$MODEL" \
+      --argjson messages "${1:-"{}"}" \
+      --argjson tools "$TOOLS" \
+      '{model:$model,messages:$messages,tools:$tools,tool_choice:"auto",stream:true}')
+
   curl -sN "$API/v1/chat/completions" \
     -H "Authorization: Bearer $KEY" \
     -H "Content-Type: application/json" \
-    -d "$(jq -c -n \
-      --arg model "$MODEL" \
-      --argjson messages "$messages" \
-      --argjson tools "$TOOLS" \
-      '{model:$model,messages:$messages,tools:$tools,tool_choice:"auto",stream:true}')"
+    -d "$post"
 }
 
 call-fn() {
-  [ -f "/tools/$1" ] && exec "/tools/$1" "$2"
-  [ "$1" = "date" ] && exec date
+  if [ -e "/tools/$1" ]; then
+    "/tools/$1" "$2"
 
-  echo "Error: unknown tool '$1'"
+    [ "$?" = 0 ] || echo "Error: unknown fail - $1($2)"
+  else
+    echo "Error: unknown tool - $1($2)"
+  fi
 }
 
 list-fn() {
@@ -126,6 +131,8 @@ if [ -n "$LORAS" ]; then
 fi
 
 if [ -z "$GELLI_API_URL" ]; then
+  GELLI_TEMP=${GELLI_TEMP:-0.8}
+
   gelli-serve $MODEL $LORAS > /dev/null 2>&1 &
 
   SERVER_PID=$!
@@ -139,17 +146,24 @@ work-dir
 
 # Initialize chat history
 messages='[
-  {"role":"system","content":"'"${GELLI_SYSTEM_PROMPT:-"You are a coding assistant with access to several tools. Use these tools to fulfill the users request. If you don't see the tools tell the user."}"'"},
+  {"role":"system","content":"'"${GELLI_SYSTEM_PROMPT:-"You are a coding assistant with several tools. Use these tools to fulfill the user's request. If you don't see the tools tell the user. All defaults are blank so you must populate."}"'"},
   {"role":"user","content":"'"$PROMPT"'"}
 ]'
+
+# Initialize tool calls
+tool_calls=""
 
 for iter in $(seq 1 "$MAX"); do
   echo "=== $iter / $MAX ==="
 
   while IFS= read -r data; do
     [ -z "$data" ] && continue
+    [ "$data" = "data: [DONE]" ] && break
 
+    finish=$(echo "${data#data: }" | jq -r '.choices[0].finish_reason // empty')
     delta=$(echo "${data#data: }" | jq -c '.choices[0].delta')
+
+    #TODO: allow interaction
 
     # Reasoning
     if reasoning=$(echo "$delta" | jq -r '.reasoning_content // empty'); [ -n "$reasoning" ]; then
@@ -157,49 +171,70 @@ for iter in $(seq 1 "$MAX"); do
     # Talking
     elif content=$(echo "$delta" | jq -r '.content // empty'); [ -n "$content" ]; then
       printf "${C_ASSIST}%s${C_RESET}" "$content"
-    else
-      printf "%s" $data
     fi
 
-    # Extract and validate fn_args
-    if call=$(echo "$delta" | jq -c '.tool_calls[0] // empty'); [ -n "$call" ]; then
-      echo "call: $call"
+    # Buffer tool call arguments by (fn_name, idx)
+    fn_out=$(echo "$delta" | jq -c '.tool_calls // []')
+    fn_len=$(echo "$fn_out" | jq length)
 
-      fn_name=$(echo "$call" | jq -r '.function.name // empty')
-      fn_args=$(echo "$call" | jq -c '.function.arguments // empty')
+    for i in $(seq 0 $((fn_len - 1))); do
+      fn_call=$(echo "$fn_out" | jq -c .[$i])
+      fn_slot=$(echo "$fn_call" | jq -r '.index // 0')
+      fn_name=$(echo "$fn_call" | jq -r '.function.name // empty')
+      fn_args=$(echo "$fn_call" | jq -r '.function.arguments // empty')
 
-      # Only proceed if we have valid data
+      # If function name is here, set the fn_tool
       if [ -n "$fn_name" ]; then
-        printf "${C_TOOL}%s(%s)${C_RESET}" "$fn_name" "${fn_args}"
+        fn_tool="tool_$(printf '%s' "$fn_name" | tr -c 'a-zA-Z0-9_' '_')_$fn_slot"
+        tool_calls="$tool_calls $fn_tool"
+      else
+        fn_tool=""
 
-        echo "calling $fn_name" > 2
-        result=$(call-fn "$fn_name" "${fn_args:-'{}'}")
-
-        printf "→ ${C_THINK}%s${C_RESET}\n\n" "$result"
-
-        echo "parsing result" > 2
-
-        # Build messages with proper JSON validation
-        call_msg=$(jq -nc --arg name "$fn_name" --argjson args "${fn_args:-'{}'}" '{role:"assistant",tool_calls:[{function:{name:$name,arguments:$args}}]}')
-        result_msg=$(jq -nc --arg name "$fn_name" --arg res "$result" '{role:"tool",name:$name,content:$res}')
-
-        echo "preparing args" > 2
-
-        messages=$(jq -nc --argjson messages "$messages" --argjson call "$call_msg" --argjson result "$result_msg" '$messages + [$call,$result]')
+        # If the function name isn't here, find the buffer for this index
+        for b in $tool_calls; do
+          if [ "${b##*_}" = "$idx" ]; then
+            fn_tool="$b"
+            break
+          fi
+        done
       fi
-    fi
 
-    #TODO: allow interaction
+      # Always append to the correct buffer, if we found it
+      if [ -n "$fn_tool" ] && [ -n "$fn_args" ]; then
+        eval "$fn_tool=\"\${$fn_tool:-}\$fn_args\""
+      fi
+    done
 
-    # Check for completion
-    if [ -n "$(echo "$line" | jq -e '.choices[0].finish_reason')" ]; then
-      printf "\n"
+    # On finish_reason:tool_calls, process all buffered tool calls
+    if [ "$finish" = "tool_calls" ]; then
+      for fn_tool in $tool_calls; do
+        fn_call="${fn_tool#tool_}"
+        fn_slot="${fn_call##*_}"
+        fn_name="${fn_call%_*}"
+        fn_args=$(eval echo \"\$$fn_tool\" | jq -c '.')
 
-      break 2  # Exit both loops
+        printf "\n\n ${C_TOOL}→ %s(%s)${C_RESET}\n" "$fn_name" "$fn_args"
+
+        fn_back=$(call-fn "$fn_name" "$fn_args")
+
+#printf "\n${C_THINK}%s${C_RESET}\n\n" "$fn_back"
+
+        ms_call=$(jq -nc --arg fn_slot "$fn_slot"  --arg fn_name "$fn_name" --arg fn_args "${fn_args:-"{}"}" '{role:"assistant",tool_calls:[{index:$fn_slot,type:"function",function:{name:$fn_name,arguments:$fn_args}}]}')
+        ms_back=$(jq -nc --arg fn_back "$fn_back" '{role:"tool",content:$fn_back}')
+        messages=$(jq -nc --argjson messages "$messages" --argjson ms_call "$ms_call" --argjson ms_back "$ms_back" '$messages + [$ms_call,$ms_back]')
+
+        unset "$fn_tool"
+      done
+
+      echo "$messages"
+      # Reset for next batch
+      tool_calls=""
     fi
   done < <(call-ai "$messages")
-echo
+
+  echo
 done
 
 echo "⚠️  Reached max iterations ($MAX) without final response." >&2
+
 exit 1

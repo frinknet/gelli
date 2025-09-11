@@ -3,9 +3,9 @@ set -euo pipefail
 
 # DEF: {"name":"write","description":"Write content to file and commit to git","parameters":{"type":"object","properties":{"filename":{"type":"string","description":"File path to write"},"contents":{"type":"string","description":"File contents"},"comment":{"type":"string","description":"Git commit message"}},"required":["filename","contents","comment"]}}
 
-filename=$(jq -r '.filename' <<< "$1")
-contents=$(jq -r '.contents' <<< "$1")
-comment=$(jq -r '.comment' <<< "$1")
+filename=$(echo "$1" | jq -r '.filename')
+contents=$(echo "$1" | jq -r '.contents')
+comment= $(echo "$1" | jq -r '.comment')
 
 mkdir -p "$(dirname "$filename")"
 printf '%s' "$contents" > "$filename"

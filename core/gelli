@@ -13,7 +13,10 @@ fi
 
 [ -f ".env" ] && source .env
 
-CMD="${0%/*}/gelli-${1:-help}"
+DIR="${0%/*}"
+CMD="${DIR}/gelli-${1:-help}"
+
+export PATH="$DIR:$PATH"
 
 shift || true
 

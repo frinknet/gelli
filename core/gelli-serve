@@ -29,5 +29,10 @@ exec llama-server --model "/models/${MODEL##*/}.gguf" $FLAGS \
   --temp $TEMP \
   --jinja \
   --no-warmup \
+  --top_k 13 \
+  --top_p 0.92 \
+  --min_p 0.00 \
   --flash-attn on \
+  --repeat_penalty 1.1 \
+  --rope-scaling none \
   --gpu-layers 99
