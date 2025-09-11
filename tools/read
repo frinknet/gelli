@@ -1,6 +1,5 @@
-#!/usr/bin/env bash
-
-set -euo pipefail
+#!/usr/bin/env sh
+set -eu
 
 # DEF: {"name":"read","description":"Read file contents","parameters":{"type":"object","properties":{"filename":{"type":"string","description":"File path to read"}},"required":["filename"]}}
 

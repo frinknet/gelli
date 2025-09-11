@@ -1,5 +1,5 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/usr/bin/env sh
+set -eu
 
 # DEF: {"name":"write","description":"Write content to file and commit to git","parameters":{"type":"object","properties":{"filename":{"type":"string","description":"File path to write"},"contents":{"type":"string","description":"File contents"},"comment":{"type":"string","description":"Git commit message"}},"required":["filename","contents","comment"]}}
 
@@ -13,4 +13,4 @@ printf '%s' "$contents" > "$filename"
 git add "$filename"
 git commit -m "$comment" || echo "Warning: commit failed"
 
-echo "✓ Written to $filename and committed: $comment"
+echo "✓ Written to $filename and committed to git."

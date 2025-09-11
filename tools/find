@@ -1,6 +1,5 @@
-#!/usr/bin/env bash
-
-set -euo pipefail
+#!/usr/bin/env sh
+set -eu
 
 # DEF: {"name":"find","description":"Find files by name pattern","parameters":{"type":"object","properties":{"filename":{"type":"string","description":"Filename pattern to search"},"dir":{"type":"string","description":"Directory to search","default":"."}},"required":["filename"]}}
 

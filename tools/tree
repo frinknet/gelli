@@ -1,12 +1,12 @@
 #!/usr/bin/env sh
-set -euo pipefail
+set -eu 
 
 # DEF: {"name":"tree","description":"List directory structure with depth limit of 3","parameters":{"type":"object","properties":{"dir":{"type":"string","default":".", "description":"Directory to explore"}},"required":[]}}
 
-dir=$(echo "${1:-"{}"}" | jq -r '.dir // "."')
+dir=$(echo "${1:-"{}"}" | jq -n '.dir // "."')
 
 if [ ! -d "$dir" ]; then
   echo "Error: directory not found"
 else
-  tree "$dir" 2>/dev/null || find "$dir" -maxdepth 3 -type f | head -50
+  tree "$dir" 2>/dev/null
 fi

@@ -1,11 +1,10 @@
-#!/usr/bin/env bash
-
-set -euo pipefail
+#!/usr/bin/env sh
+set -eu
 
 # DEF: {"name":"rgrep","description":"Search for pattern recursively in files","parameters":{"type":"object","properties":{"pattern":{"type":"string","description":"Search pattern"},"dir":{"type":"string","description":"Directory to search","default":"."}},"required":["pattern"]}}
 
 pattern=$(echo "$1" | jq -r '.pattern')
-dir=$(echo "$1" | jq -r '.dir // "."')
+dir=$(echo "$1" | jq -n '.dir // "."')
 
 [ ! -d "$dir" ] && { echo "Error: Directory '$dir' not found"; exit 1; }
 
