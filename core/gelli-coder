@@ -27,7 +27,7 @@ TOOLS=""
 
 API=${GELLI_API_URL:-http://localhost:$PORT}
 KEY=${GELLI_API_KEY:-GELLI}
-MAX=${GELLI_MAY_CALLS:-25}
+MAX=${GELLI_MAX_CALLS:-25}
 
 # Color codes
 C_THINK="\e[33m"    # yellow
