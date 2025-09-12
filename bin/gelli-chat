@@ -1,5 +1,4 @@
-#!/usr/bin/env sh
-set -e
+#!/gelli/bin/env sh
 
 # USAGE: gelli chat - Load the model and start a conversation
 #

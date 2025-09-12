@@ -1,5 +1,4 @@
-#!/usr/bin/env sh
-set -e
+#!/gelli/bin/env sh
 
 # USAGE: gelli coder - Run an iteration of the coder AI
 #

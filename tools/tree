@@ -1,30 +1,4 @@
-#!/usr/bin/env sh
-set -eu
-
-# DEF: {"name":"tree","description":"List directory tree","parameters":{"type":"object","properties":{"dir":{"type":"string","description":"Base directory","default":"."}},"required":[]}}
-
-canonpath() {
-  local dir=$(echo "$PWD/./${1#$PWD}" | awk -F/ '
-    {
-      n = split($0, a, "/")
-      out = ""
-      for(i=1;i<=n;i++){
-        if(a[i]=="."||a[i]=="") continue
-        else if(a[i]=="..") sub("/[^/]+$", "", out)
-        else out=out"/"a[i]
-      }
-      print out ? out : "/"
-    }
-  ')
-  echo ".${dir#$PWD}"
-}
-
-dir="$(echo "${1:-"{}"}" | jq -r '.dir // "."')"
-dir=$(canonpath "$dir")
-
-case "$dir" in
-  .|./*) ;; *) echo "Error: outside work dir"; exit 1; ;;
-esac
+#!/gelli/bin/env sh '{"name":"tree","description":"List directory tree","parameters":{"type":"object","properties":{"dir":{"type":"string","description":"Base directory","default":"."}},"required":[]}}'
 
 [ ! -d "$dir" ] && { echo "Error: directory not found"; exit 1; }
 

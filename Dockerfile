@@ -27,7 +27,6 @@ RUN apk add --no-cache jq vim git curl libstdc++ libgomp && \
 # Set version
 ARG VERSION
 RUN test -n "$VERSION" && printf 'GELLI %s\n' "$VERSION" > /etc/VERSION
-RUN echo 'export PS1="\n\[\e[1;91m\]  \w \[\e[38;5;52m\]\$\[\e[0m\] \[\e]12;#999900\007\]\[\e]12;#999900\007\]\[\e[3 q\]"' > /.env
 
 # Copy ALL binaries in one layer
 COPY --from=build /src/build/bin/gelli* /src/build/bin/llama* /usr/local/bin/
@@ -36,14 +35,13 @@ COPY --from=build /src/build/bin/gelli* /src/build/bin/llama* /usr/local/bin/
 COPY --from=build /src/build/bin/*.so /usr/local/lib/
 
 # Add tools directory
-COPY tools/* /usr/tools/
-COPY agents/* /usr/agents/
+COPY * /gelli/
 
 # Set defaults environment
-ENV ENV=/.env \
+ENV ENV=/gelli/bin/env \
     GELLI_PORT=7771 \
     GELLI_DEFAULT=ol:qwen3:1.5b
 
 # Ready to rock
 WORKDIR /work
-ENTRYPOINT ["gelli"]
+ENTRYPOINT ["/gelli/bin/gelli"]

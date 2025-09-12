@@ -1,0 +1,14 @@
+#!/gelli/bin/env sh
+
+if  [ "$1" = "version" ] && exec cat /etc/VERSION
+if  [ "$1" = "shell" ] && exec sh "$@"
+
+[ -f ".env" ] && source .env
+
+CMD="${DIR}/gelli-${1:-help}"
+
+export PATH="$PWD/.gelli/bin:${0%/*}:$PATH"
+
+shift || true
+
+[ -f "$CMD" ] && exec "$CMD" "$@" || error UNKNOWN COMMAND: $1 >&2

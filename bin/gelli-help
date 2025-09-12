@@ -1,5 +1,4 @@
-#!/usr/bin/env sh
-set -e
+#!/gelli/bin/env sh
 
 # USAGE: gelli help - show help for gelli commands
 #

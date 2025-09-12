@@ -1,0 +1,52 @@
+#!/bin/env sh
+set -eu
+
+error() {
+  echo $@ >&2
+
+  exit 1
+}
+
+safety() {
+  local dir=$(echo "$PWD/./${1#$PWD}" | awk -F/ '
+    {
+      n = split($0, a, "/")
+      out = ""
+
+      for(i=1;i<=n;i++){
+  if(a[i]=="."||a[i]=="") continue
+  else if(a[i]=="..") sub("/[^/]+$", "", out)
+  else out=out"/"a[i]
+      }
+
+      print out ? out : "/"
+    }
+  ')
+
+  echo ".${dir#$PWD}"
+}
+
+define() {
+  [ ! -t 0 ] && echo "${1:-"{}"}" | exec jq .
+
+  json=$(cat)
+
+  for key in $(echo "$json" | jq -r 'keys[]'); do
+    value=$(echo "$json" | jq -r ".\"$key\" // empty")
+
+    case "$key" in
+      dir) eval "$key=\$(safety '$value')";;
+      file) [ -n "$value" ] && eval "$key=\$(safety '$value')";;
+      *) eval "$key='$value'"
+    esac
+  done
+}
+
+GELLI_SHELL=
+
+export ENV="$0"
+export PS1="\n\[\e[1;91m\]  \w \[\e[38;5;52m\]\$\[\e[0m\] \[\e]12;#999900\007\]\[\e]12;#999900\007\]\[\e[3 q\]"'
+
+[ "$1" =  "sh" ] && export GELLI_SHELL=1 && shift
+[ -n "$1" ] && define "$1" && shift
+[ -n "$GELLI_SHELL" ] && exec sh "$@"

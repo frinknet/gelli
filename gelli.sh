@@ -80,32 +80,12 @@ update)
   curl -fsSL "https://github.com/${REPO#*/}/raw/$BRANCH/install.sh" | exec sh -s -- "$VER"
 
   ;;
-shell)
-  exec docker run -it --entrypoint sh \
-    -m ${GELLI_MEMORY}m \
-    -v "$PWD:/work" \
-    -v ~/.vimrc:/root/.vimrc \
-    -v gelli-models:/models \
-    -v gelli-loras:/loras \
-    -e GELLI_PORT \
-    -e GELLI_TEMP \
-    -e GELLI_MODEL \
-    -e GELLI_LORAS \
-    -e GELLI_MEMORY \
-    -e GELLI_API_URL \
-    -e GELLI_API_KEY \
-    -e GELLI_CTX_SIZE \
-    -e GELLI_BATCH_SIZE \
-    -e GELLI_OUTPUT_SIZE \
-    -e GELLI_SYSTEM_PROMPT \
-    -e GELLI_LLAMA_FLAGS \
-    -e GELLI_MAX_CALLS \
-    -e TERM \
-    "$IMAGE"
-  ;;
 *)
-  exec docker run --rm -i \
-    -u $(id -u):$(id -g) \
+  flags="-i"
+
+  [ "${1:-}" = "shell" ] && flags="${flags}t"
+
+  exec docker run --rm $flags \
     -m ${GELLI_MEMORY}m \
     -v "$PWD:/work" \
     -v gelli-models:/models \
@@ -123,6 +103,9 @@ shell)
     -e GELLI_SYSTEM_PROMPT \
     -e GELLI_LLAMA_FLAGS \
     -e GELLI_MAX_CALLS \
+    -u $(id -u):$(id -g) \
+    -
+    -e USER \
     -e TERM \
     "$IMAGE" "$@"
   ;;

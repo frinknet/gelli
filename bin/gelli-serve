@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/gelli/bin/env sh
 set -e
 
 TEMP=${GELLI_TEMP:-0.1}

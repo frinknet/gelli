@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/gelli/bin/env sh
 set -e
 
 # USAGE: gelli models - Manage Models

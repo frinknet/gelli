@@ -1,6 +1,3 @@
-#!/usr/bin/env sh
-set -eu
+#!/gelli/bin/env sh '{"name":"pwd","description":"get current working directory"}'
 
-# DEF: {"name":"pwd","description":"get current working directory"}
-
-echo $PWD
+pwd
