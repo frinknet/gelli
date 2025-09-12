@@ -45,7 +45,8 @@ define() {
 GELLI_SHELL=
 
 export ENV="$0"
-export PS1="\n\[\e[1;91m\]  \w \[\e[38;5;52m\]\$\[\e[0m\] \[\e]12;#999900\007\]\[\e]12;#999900\007\]\[\e[3 q\]"'
+export PS1="\n\[\e[1;91m\]  \w \[\e[38;5;52m\]\$\[\e[0m\] \[\e]12;#999900\007\]\[\e]12;#999900\007\]\[\e[3 q\]"
+export PATH="$PWD/.gelli/bin:${0%/*}:$PATH"
 
 [ "$1" =  "sh" ] && export GELLI_SHELL=1 && shift
 [ -n "$1" ] && define "$1" && shift

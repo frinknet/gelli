@@ -1,14 +1,16 @@
 #!/gelli/bin/env sh
 
-if  [ "$1" = "version" ] && exec cat /etc/VERSION
-if  [ "$1" = "shell" ] && exec sh "$@"
+{
+  getent group "$GID" || groupadd -g "$GID" gelli
+  getent passwd "$UID" || useradd -u "$UID" -g "$GID" -m gelli
+} > /dev/null
 
 [ -f ".env" ] && source .env
+[ "$1" = "shell" ] && exec sh "$@"
+[ "$1" = "version" ] && exec cat /etc/VERSION
 
 CMD="${DIR}/gelli-${1:-help}"
 
-export PATH="$PWD/.gelli/bin:${0%/*}:$PATH"
-
 shift || true
 
-[ -f "$CMD" ] && exec "$CMD" "$@" || error UNKNOWN COMMAND: $1 >&2
+[ -f "$CMD" ] && exec su $(getent passwd "$UID" | cut -d: -f1) -c "$CMD" "$@" || error UNKNOWN COMMAND: $1 >&2

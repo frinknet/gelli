@@ -85,7 +85,7 @@ update)
 
   [ "${1:-}" = "shell" ] && flags="${flags}t"
 
-  exec docker run --rm $flags \
+  echo docker run --rm $flags \
     -m ${GELLI_MEMORY}m \
     -v "$PWD:/work" \
     -v gelli-models:/models \
@@ -103,9 +103,8 @@ update)
     -e GELLI_SYSTEM_PROMPT \
     -e GELLI_LLAMA_FLAGS \
     -e GELLI_MAX_CALLS \
-    -u $(id -u):$(id -g) \
-    -
-    -e USER \
+    -e UID=$(id -u) \
+    -e GID=$(id -g) \
     -e TERM \
     "$IMAGE" "$@"
   ;;
