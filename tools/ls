@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-# DEF: {"name":"tree","description":"List directory tree","parameters":{"type":"object","properties":{"dir":{"type":"string","description":"Base directory","default":"."}},"required":[]}}
+# DEF: {"name":"ls","description":"List directory","parameters":{"type":"object","properties":{"dir":{"type":"string","description":"Base directory","default":"."}},"required":[]}}
 
 canonpath() {
   local dir=$(echo "$PWD/./${1#$PWD}" | awk -F/ '
@@ -28,4 +28,4 @@ esac
 
 [ ! -d "$dir" ] && { echo "Error: directory not found"; exit 1; }
 
-tree -I 'node_modules|.*' "$dir"
+ls "$dir" | grep -v "\..*\|node_modules"

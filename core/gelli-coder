@@ -63,8 +63,8 @@ call-ai() {
 }
 
 call-fn() {
-  if [ -e "/tools/$1" ]; then
-    "/tools/$1" "$2"
+  if [ -e "/usr/tools/$1" ]; then
+    "/usr/tools/$1" "$2"
 
     [ "$?" = 0 ] || echo "Error: unknown fail - $1($2)"
   else
@@ -73,11 +73,13 @@ call-fn() {
 }
 
 list-fn() {
-  grep '^# DEF: ' /tools/* | sed 's/^.*DEF: //' | jq -R 'fromjson? | select(.) | {"type":"function","function":.}' | jq -sc '.'
+  grep '^# DEF: ' /usr/tools/* | sed 's/^.*DEF: //' | jq -R 'fromjson? | select(.) | {"type":"function","function":.}' | jq -sc '.'
 }
 
 work-dir() {
   [ -d ".git" ] || return
+
+  git config --global --add safe.directory "$PWD"
 
   local dir="/tmp/$BRANCH"
 
@@ -133,7 +135,7 @@ if [ -n "$LORAS" ]; then
 fi
 
 if [ -z "$GELLI_API_URL" ]; then
-  GELLI_TEMP=${GELLI_TEMP:-0.8}
+  GELLI_TEMP=${GELLI_TEMP:-0.1}
 
   gelli-serve $MODEL $LORAS > /dev/null 2>&1 &
 
@@ -146,17 +148,20 @@ fi
 
 work-dir
 
+echo "$PWD"
+
 # Initialize chat history
 messages='[
-  {"role":"system","content":"'"${GELLI_SYSTEM_PROMPT:-"You are a coding assistant with several tools. Use these tools to fulfill the user's request. If you don't see the tools tell the user. All defaults are blank so you must populate."}"'"},
+  {"role":"system","content":"'"${GELLI_SYSTEM_PROMPT:-"You are an expert coder. Your tools can only access files under \$PWD using relative paths. Don't fear, everything is backed up. Think quickly. Read and write full files."}"'"},
   {"role":"user","content":"'"$PROMPT"'"}
 ]'
 
 # Initialize tool calls
 tool_calls=""
+has_talked=""
 
 for iter in $(seq 1 "$MAX"); do
-  echo "=== $iter / $MAX ==="
+#  echo "=== $iter / $MAX ==="
 
   while IFS= read -r data; do
     [ -z "$data" ] && continue
@@ -172,10 +177,15 @@ for iter in $(seq 1 "$MAX"); do
       printf "${C_THINK}%s${C_RESET}" "$reasoning"
     # Talking
     elif content=$(echo "$delta" | jq -r '.content // empty'); [ -n "$content" ]; then
+      if [ -z "$has_talked" ]; then
+        has_talked=1
+        echo
+      fi
+
       printf "${C_ASSIST}%s${C_RESET}" "$content"
     fi
 
-    # Buffer tool call arguments by (fn_name, idx)
+    # Buffer tool call arguments
     fn_out=$(echo "$delta" | jq -c '.tool_calls // []')
     fn_len=$(echo "$fn_out" | jq length)
 
@@ -193,9 +203,10 @@ for iter in $(seq 1 "$MAX"); do
         fn_tool=""
 
         # If the function name isn't here, find the buffer for this index
-        for b in $tool_calls; do
-          if [ "${b##*_}" = "$idx" ]; then
-            fn_tool="$b"
+        for tool in $tool_calls; do
+          if [ "${tool##*_}" = "$fn_slot" ]; then
+            fn_tool="$tool"
+
             break
           fi
         done
@@ -219,8 +230,6 @@ for iter in $(seq 1 "$MAX"); do
 
         fn_back=$(call-fn "$fn_name" "$fn_args")
 
-#printf "\n${C_THINK}%s${C_RESET}\n\n" "$fn_back"
-
         ms_call=$(jq -nc --arg fn_slot "$fn_slot"  --arg fn_name "$fn_name" --arg fn_args "${fn_args:-"{}"}" '{role:"assistant",tool_calls:[{index:$fn_slot,type:"function",function:{name:$fn_name,arguments:$fn_args}}]}')
         ms_back=$(jq -nc --arg fn_back "$fn_back" '{role:"tool",content:$fn_back}')
         messages=$(jq -nc --argjson messages "$messages" --argjson ms_call "$ms_call" --argjson ms_back "$ms_back" '$messages + [$ms_call,$ms_back]')
@@ -228,15 +237,22 @@ for iter in $(seq 1 "$MAX"); do
         unset "$fn_tool"
       done
 
-      echo "$messages"
+#echo "$messages"
       # Reset for next batch
       tool_calls=""
+      has_talked=""
+
+    elif [ "$finish" = "stop" ]; then
+      echo
+      echo
+      exit 0
+    elif [ -n "$finish" ]; then
+      printf "\n\nEXIT %s\n" "$data" 
+      exit 0
     fi
   done < <(call-ai "$messages")
 
   echo
 done
-
-echo "⚠️  Reached max iterations ($MAX) without final response." >&2
 
 exit 1

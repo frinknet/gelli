@@ -1,0 +1,45 @@
+#!/usr/bin/env sh
+set -eu
+
+# DEF: {"name":"putfile","description":"Write content to file and commit to git","parameters":{"type":"object","properties":{"file":{"type":"string","description":"Filename relative to /work directory"},"contents":{"type":"string","description":"File contents"},"comment":{"type":"string","description":"Git commit message"}},"required":["file","contents","comment"]}}
+
+canonpath() {
+  local dir=$(echo "$PWD/./${1#$PWD}" | awk -F/ '
+    {
+      n = split($0, a, "/")
+      out = ""
+      for(i=1;i<=n;i++){
+        if(a[i]=="."||a[i]=="") continue
+        else if(a[i]=="..") sub("/[^/]+$", "", out)
+        else out=out"/"a[i]
+      }
+      print out ? out : "/"
+    }
+  ')
+  echo ".${dir#$PWD}"
+}
+
+file=$(echo "${1:-"{}"}" | jq -r '.file // empty')
+contents=$(echo "${1:-"{}"}" | jq -r '.contents // empty')
+comment=$(echo "${1:-"{}"}" | jq -r '.comment // empty')
+
+[ -z "$file" ] && { echo "Error: empty file"; exit 1; }
+[ -z "$contensts" ] && { echo "Error: empty contensts"; exit 1; }
+[ -z "$comment" ] && { echo "Error: empty comment"; exit 1; }
+
+dir=$(canonpath "$(dirname "$file")")
+
+case "$dir" in
+  .|./*) ;; *) echo "Error: outside work dir"; exit 1; ;;
+esac
+
+file="$dir/$(basename $file)"
+
+mkdir -p "$dir"
+printf '%s' "$contents" > "$file"
+
+git reset --hard >//dev/null || true
+git add "$file" >//dev/null || true
+git commit -m "$comment" || echo "Warning: commit failed"
+
+echo "✓ File written and committed"

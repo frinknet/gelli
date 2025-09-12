@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-# DEF: {"name":"tree","description":"List directory tree","parameters":{"type":"object","properties":{"dir":{"type":"string","description":"Base directory","default":"."}},"required":[]}}
+# DEF: {"name":"symbol","description":"Search entire codebase for symbol","parameters":{"type":"object","properties":{"search":{"type":"string","description":"symbol to search"},"dir":{"type":"string","description":"Base  directory","default":"."}},"required":["search"]}}
 
 canonpath() {
   local dir=$(echo "$PWD/./${1#$PWD}" | awk -F/ '
@@ -19,6 +19,8 @@ canonpath() {
   echo ".${dir#$PWD}"
 }
 
+pat="$(echo "${1:-"{}"}" | jq -r '.search // empty')"
+
 dir="$(echo "${1:-"{}"}" | jq -r '.dir // "."')"
 dir=$(canonpath "$dir")
 
@@ -27,5 +29,6 @@ case "$dir" in
 esac
 
 [ ! -d "$dir" ] && { echo "Error: directory not found"; exit 1; }
+[ -z "$pat" ] && { echo "Error: empty search"; exit 1; }
 
-tree -I 'node_modules|.*' "$dir"
+find "$dir" -type f ! -path "*/.git/*" ! -path "*/node_modules/*" -exec grep -nE "\b$pat\b" {} + || echo "\"$pat\" not found in \""

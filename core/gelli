@@ -20,4 +20,10 @@ export PATH="$DIR:$PATH"
 
 shift || true
 
+if [ -d ".gelli" ]; then
+  [ -d  ".gelli/bin" ] && ln -sf "$PWD/.gelli/bin/*" /usr/local/bin/
+  [ -d  ".gelli/tools" ] && ln -sf "$PWD/.gelli/tools/*" /usr/tools/
+  [ -d  ".gelli/agents" ] && ln -sf "$PWD/.gelli/agents/*" /usr/agents/
+fi
+
 [ -f "$CMD" ] && exec "$CMD" "$@" || error UNKNOWN COMMAND: $1 >&2

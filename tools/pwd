@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+set -eu
+
+# DEF: {"name":"pwd","description":"get current working directory"}
+
+echo $PWD

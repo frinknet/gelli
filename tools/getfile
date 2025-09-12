@@ -1,0 +1,39 @@
+#!/usr/bin/env sh
+set -eu
+
+# DEF: {"name":"getfile","description":"Read file contents","parameters":{"type":"object","properties":{"file":{"type":"string","description":"Filename relative to /work directory"}},"required":["file"]}}
+
+canonpath() {
+  local dir=$(echo "$PWD/./${1#$PWD}" | awk -F/ '
+    {
+      n = split($0, a, "/")
+      out = ""
+      for(i=1;i<=n;i++){
+        if(a[i]=="."||a[i]=="") continue
+        else if(a[i]=="..") sub("/[^/]+$", "", out)
+        else out=out"/"a[i]
+      }
+      print out ? out : "/"
+    }
+  ')
+  echo ".${dir#$PWD}"
+}
+
+file=$(echo "${1:-"{}"}" | jq -r '.file // empty')
+
+[ -z "$file" ] && { echo "Error: empty file"; exit 1; }
+
+dir=$(canonpath "$(dirname "$file")")
+
+
+case "$dir" in
+  .|./*) ;; *) echo "Error: outside work dir"; exit 1; ;;
+esac
+
+file="$dir/$(basename $file)"
+
+[ ! -e "$file" ] && { echo "Error: file not found"; exit 1; }
+
+#todo check for size
+
+cat "$file"

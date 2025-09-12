@@ -36,12 +36,13 @@ COPY --from=build /src/build/bin/gelli* /src/build/bin/llama* /usr/local/bin/
 COPY --from=build /src/build/bin/*.so /usr/local/lib/
 
 # Add tools directory
-COPY tools/* /tools/
+COPY tools/* /usr/tools/
+COPY agents/* /usr/agents/
 
 # Set defaults environment
 ENV ENV=/.env \
     GELLI_PORT=7771 \
-    GELLI_DEFAULT=ol:deepseek-r1:1.5b
+    GELLI_DEFAULT=ol:qwen3:1.5b
 
 # Ready to rock
 WORKDIR /work
