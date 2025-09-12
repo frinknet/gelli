@@ -85,7 +85,7 @@ update)
 
   [ "${1:-}" = "shell" ] && flags="${flags}t"
 
-  echo docker run --rm $flags \
+  exec docker run --rm $flags \
     -m ${GELLI_MEMORY}m \
     -v "$PWD:/work" \
     -v gelli-models:/models \

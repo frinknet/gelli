@@ -28,13 +28,13 @@ ARG VERSION
 RUN test -n "$VERSION" && printf 'GELLI %s\n' "$VERSION" > /etc/VERSION
 
 # Copy ALL binaries in one layer
-COPY --from=build /src/build/bin/gelli* /src/build/bin/llama* /usr/local/bin/
+COPY --from=build /src/build/bin/llama* /usr/local/bin/
 
 # Copy ALL shared libraries in one layer  
 COPY --from=build /src/build/bin/*.so /usr/local/lib/
 
 # Add tools directory
-COPY * /gelli/
+COPY ./* /gelli/
 
 # Set defaults environment
 ENV ENV=/gelli/bin/env \
