@@ -16,7 +16,6 @@ RUN cmake -B build -DCMAKE_BUILD_TYPE=Release
 RUN cmake --build build --config Release -j$(nproc)
 
 # Add gelli tools
-COPY core/gelli* /src/build/bin/
 RUN chmod +x /src/build/bin/*
 
 # Final lean stage
