@@ -17,7 +17,7 @@ jobs:
       contents: read
       packages: write
     env:
-      IMAGE_NAME: ghcr.io/${{ github.repository }}
+      IMAGE: ghcr.io/${{ github.repository }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -35,7 +35,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE_NAME }}
+          images: ${{ env.IMAGE}}
           flavor: |
             latest=${{ startsWith(github.ref, 'refs/tags/v') }}
           tags: |
@@ -62,6 +62,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
+            IMAGE=${{ env.IMAGE }}
             VERSION=${{ env.VERSION }}
           platforms: linux/amd64
           cache-from: type=gha

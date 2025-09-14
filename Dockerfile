@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # GELLI - General Edge Local Llama Instances
 FROM alpine:latest AS build
 RUN apk add --no-cache build-base cmake git bash curl-dev
@@ -15,11 +16,13 @@ RUN find . -type f -name "*.c"	 -exec sed -i 's/<linux\/limits.h>/<limits.h>/g' 
 RUN cmake -B build -DCMAKE_BUILD_TYPE=Release 
 RUN cmake --build build --config Release -j$(nproc)
 
-# Add gelli tools
-RUN chmod +x /src/build/bin/*
-
 # Final lean stage
 FROM alpine:latest
+
+# Set version and image name
+ARG VERSION
+ARG IMAGE
+
 # Copy ALL binaries in one layer
 COPY --from=build /src/build/bin/llama* /usr/local/bin/
 
@@ -30,18 +33,26 @@ RUN apk add --no-cache jq vim git curl libstdc++ libgomp && \
     mkdir -p /models /loras /work /tools /usr/local/lib
 
 # Add tools directory
-COPY . /gelli/
+COPY . /$IMAGE/
 
-# Set version
-ARG VERSION
-RUN printf 'GELLI %s\n' "$VERSION" > /gelli/VERSION; \
-    printf '#!/gelli/bin/env sh\ngelli-start "$@"' > /usr/bin/gelli; \
-    chmod +x /usr/bin/gelli
+RUN <<ENTRYBIN
+
+printf 'GELLI %s\n' "$VERSION" > /$IMAGE/VERSION; \
+
+cat > /usr/bin/$IMAGE <<'CLI'
+#!/$IMAGE/bin/env sh
+$IMAGE-start "$@"
+CLI
+
+chmod +x /usr/bin/$IMAGE
+ln /usr/bin/$IMAGE /bin/entrypoint
+
+ENTRYBIN
 
 # Set default model
-ENV ENV=/gelli/bin/env \
+ENV ENV=/$IMAGE/bin/env \
 GELLI_DEFAULT=ol:qwen3:1.5b
 
 # Ready to rock
 WORKDIR /work
-ENTRYPOINT ["gelli"]
+ENTRYPOINT ["/bin/entrypoint"]

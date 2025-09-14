@@ -8,8 +8,8 @@ VER="${1:-latest}"
 # Create wrapper bin directory
 mkdir -p "$PREFIX"
 case ":$PATH:" in
-  *:"$PREFIX"|"$PREFIX":*|*:"$PREFIX":*) ;;
-  *) printf '\nexport PATH="%s:$PATH"\n' "$PREFIX" >> "$HOME/bashrc" || true ;;
+  *:"$PREFIX":*) ;;
+  *) printf '\nexport PATH="%s:$PATH"\n' "$PREFIX" >> "$HOME/.bashrc" || true ;;
 esac
 
 # Pull and tag the image as before
@@ -49,9 +49,9 @@ esac
 
 # Install the script
 if [ "$VER" = "local" ]; then
-  cat gelli.sh | sed "s/^VERSION=\"latest\"/VERSION=\"$VER\"/g" > "$WRAP"
+  cat cli.sh | sed "s/^VERSION=\"latest\"/VERSION=\"$VER\"/g" > "$WRAP"
 else
-  curl -fsSL "https://github.com/${REPO#*/}/raw/$BRANCH/gelli.sh" | sed "s/^VERSION=\"latest\"/VERSION=\"$VER\"/g" > "$WRAP"
+  curl -fsSL "https://github.com/${REPO#*/}/raw/$BRANCH/cli.sh" | sed "s/^VERSION=\"latest\"/VERSION=\"$VER\"/g" > "$WRAP"
 fi
 
 # Make it runnable
