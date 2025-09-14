@@ -1,6 +1,22 @@
-#!/gelli/env sh '{"name":"symbol","description":"Search entire codebase for symbol","parameters":{"type":"object","properties":{"search":{"type":"string","description":"symbol to search"},"dir":{"type":"string","description":"Base  directory","default":"."}},"required":["search"]}}'
+#!/bin/env sh --tool
 
 [ ! -d "$dir" ] && { echo "Error: directory not found"; exit 1; }
 [ -z "$search" ] && { echo "Error: empty search"; exit 1; }
 
-find "$dir" -type f ! -path "*/.git/*" ! -path "*/node_modules/*" -exec grep -nE "\b$search\b" {} + || echo "\"$search\" not found in \""
+exec find "$dir" -type f ! -path "*/.git/*" ! -path "*/node_modules/*" -exec grep -nE "\b$search\b" {} + || echo "\"$search\" not found in \"" && exit 1
+
+---
+
+name: symbol
+description: "Search entire codebase for symbol"
+parameters:
+  type: object
+  properties:
+    search:
+      type: string
+      description: "Symbol to search"
+    dir:
+      type: string
+      description: "Base directory"
+      default: "."
+  required: ["search"]

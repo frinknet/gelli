@@ -26,7 +26,9 @@ safety() {
 }
 
 tooling() {
-  [ -t 0 ] && exec jq -n "${1:-"{}"}"
+  [ -t 0 ] && sed '1,/^---$/d' "$1" | exec yq e -o=json '.' && exit
+
+  echo moving on
 
   json=$(cat)
 
@@ -64,21 +66,13 @@ prefix bin "$BIN"
 prefix tools tool
 prefix agents agent
 
-if [ "${1#sh }" != "$1" ]; then
-  SHELL="sh"
-  JSON="${1#sh }"
-  JSON="${JSON#\'}"
-  JSON="${JSON%\'}"
+if [ "$1" = "sh --tool" ]; then
+  export SHELL=$(which "$1")
   shift
-  tooling "$JSON"
-else
-  CHAR=
-
-  [ "$1" = "sh" ] && { SHELL="$1"; shift; }
-  [ -n "$1" ] && CHAR="${1:0:1}"
-  [ "$CHAR" =  "{" ] && { tooling "$1"; shift; }
-
-  unset CHAR
+  tooling "$1"
+elif [ "$1" = "sh" ]; then
+  export SHELL=$(which "$1")
+  shift
 fi
 
 [ -n "$SHELL" ] && source "$@"

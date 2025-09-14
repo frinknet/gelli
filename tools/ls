@@ -1,5 +1,18 @@
-#!/gelli/bin//env sh '{"name":"ls","description":"List directory","parameters":{"type":"object","properties":{"dir":{"type":"string","description":"Base directory","default":"."}},"required":[]}}'
+#!/bin/env sh --tool
 
 [ ! -d "$dir" ] && { echo "Error: directory not found"; exit 1; }
 
-ls "$dir" | grep -v "\..*\|node_modules"
+ls "$dir" | exec grep -v "\..*\|node_modules"
+
+---
+
+name: ls
+description: List directory
+parameters:
+	type: object
+	properties:
+		dir:
+			type: string
+			description: Base directory
+			default: "."
+	required: []

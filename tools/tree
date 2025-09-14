@@ -1,5 +1,18 @@
-#!/gelli/bin/env sh '{"name":"tree","description":"List directory tree","parameters":{"type":"object","properties":{"dir":{"type":"string","description":"Base directory","default":"."}},"required":[]}}'
+#!/bin/env sh --tool
 
 [ ! -d "$dir" ] && { echo "Error: directory not found"; exit 1; }
 
-tree -I 'node_modules|.*' "$dir"
+exec tree -I 'node_modules|.*' "$dir"
+
+---
+
+name: tree
+description: "List directory tree"
+parameters:
+	type: object
+	properties:
+		dir:
+			type: string
+			description: "Base directory"
+			default: "."
+	required: []

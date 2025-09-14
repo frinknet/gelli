@@ -1,7 +1,0 @@
-#!/gelli/bin//env sh '{"name":"getfile","description":"Read file contents","parameters":{"type":"object","properties":{"file":{"type":"string","description":"Filename relative to /work directory"}},"required":["file"]}}'
-
-[ ! -e "$file" ] && { echo "Error: file not found"; exit 1; }
-
-#todo check for size
-
-cat "$file"

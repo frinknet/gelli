@@ -1,4 +1,4 @@
-#!/gelli/bin//env sh '{"name":"putfile","description":"Write content to file and commit to git","parameters":{"type":"object","properties":{"file":{"type":"string","description":"Filename relative to /work directory"},"contents":{"type":"string","description":"File contents"},"comment":{"type":"string","description":"Git commit message"}},"required":["file","contents","comment"]}}'
+#!/bin/env sh --tool
 
 [ -z "$file" ] && { echo "Error: empty file"; exit 1; }
 [ -z "$contensts" ] && { echo "Error: empty contensts"; exit 1; }
@@ -11,4 +11,22 @@ git reset --hard >//dev/null || true
 git add "$file" >//dev/null || true
 git commit -m "$comment" || echo "Warning: commit failed"
 
-echo "✓ File written and committed: $file"
+exec echo "✓ File written and committed: $file"
+
+---
+
+name: putfile
+description: "Write content to file and commit to git"
+parameters:
+  type: object
+  properties:
+    file:
+      type: string
+      description: "Filename in your work directory"
+    contents:
+      type: string
+      description: "File contents"
+    comment:
+      type: string
+      description: "Git commit message"
+  required: [file, contents, comment]

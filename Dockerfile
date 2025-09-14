@@ -29,8 +29,10 @@ COPY --from=build /src/build/bin/llama* /usr/local/bin/
 # Copy ALL shared libraries in one layer  
 COPY --from=build /src/build/bin/*.so /usr/local/lib/
 
-RUN apk add --no-cache jq vim git curl libstdc++ libgomp && \
-    mkdir -p /models /loras /work /tools /usr/local/lib
+RUN apk add --no-cache jq vim git curl libstdc++ libgomp \
+ && mkdir -p /models /loras /work /tools /usr/local/lib \
+ && curl -sSLo /usr/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 \
+ && chmod +x /usr/bin/yq
 
 # Add tools directory
 COPY . /$IMAGE/
@@ -39,18 +41,24 @@ RUN <<ENTRYBIN
 
 printf 'GELLI %s\n' "$VERSION" > /$IMAGE/VERSION; \
 
+cat > /bin/env <<ENV
+#!/usr/bin/env sh
+source /$IMAGE/bin/env
+ENV
+
 cat > /usr/bin/$IMAGE <<CLI
-#!/$IMAGE/bin/env sh
+#!/bin/env sh
 $IMAGE-start "\$@"
 CLI
 
+chmod +x /bin/env
 chmod +x /usr/bin/$IMAGE
 ln /usr/bin/$IMAGE /bin/entrypoint
 
 ENTRYBIN
 
 # Set default model
-ENV ENV=/$IMAGE/bin/env \
+ENV ENV=/gelli/bin/env \
 GELLI_DEFAULT=ol:qwen3:1.5b
 
 # Ready to rock
