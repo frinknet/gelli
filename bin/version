@@ -1,0 +1,3 @@
+#!/gelli/bin/env sh
+
+cat /$BIN/VERSION

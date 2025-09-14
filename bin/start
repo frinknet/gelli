@@ -1,16 +1,22 @@
 #!/gelli/bin/env sh
 
 {
+  getent passwd "$UID" || adduser -u "$UID" -g "$GID" -h /work/.gelli -D gelli
   getent group "$GID" || addgroup -g "$GID" gelli
-  getent passwd "$UID" || adduser -u "$UID" -g "$GID" -H -D gelli
 } > /dev/null 2>&1
 
 [ -f ".env" ] && source .env
-[ "${1:-}" = "shell" ] && exec sh
-[ "${1:-}" = "version" ] && exec cat /etc/VERSION
+#[ -f ".$BIN/bin/env" ] && ln -sf "$PWD/.$BIN/bin/env" "/gelli/bin/env"
 
-CMD="${GELLI}/${1:-help}"
+CMD="$(alias "$BIN-$1" 2>/dev/null | cut -d\' -f2)"
+
+[ -z "$CMD" ] && CMD="$RUN/bin/help"
 
 shift || true
 
-[ -f "$CMD" ] && exec su $(getent passwd "$UID" | cut -d: -f1) -c "$CMD" "$@" || error UNKNOWN COMMAND: $1 >&2
+if [ "$(id -u)" -eq 0 ]; then
+  exec su "$(getent passwd "$UID" | cut -d: -f1)" -c "$CMD" "$@ || error UNKNOWN COMMAND: $1 >&2"
+else
+  exec "$CMD" "$@ || error UNKNOWN COMMAND: $1 >&2"
+fi
+

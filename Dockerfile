@@ -34,7 +34,7 @@ COPY . /gelli/
 
 # Set version
 ARG VERSION
-RUN printf 'GELLI %s\n' "$VERSION" > /etc/VERSION; \
+RUN printf 'GELLI %s\n' "$VERSION" > /gelli/VERSION; \
     printf '#!/gelli/bin/env sh\ngelli-start "$@"' > /usr/bin/gelli; \
     chmod +x /usr/bin/gelli
 

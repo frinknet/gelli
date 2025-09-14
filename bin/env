@@ -26,7 +26,7 @@ safety() {
 }
 
 tooling() {
-  [ ! -t 0 ] && echo "${1:-"{}"}" | exec jq .
+  [ -t 0 ] && exec jq -n "${1:-"{}"}"
 
   json=$(cat)
 
@@ -42,7 +42,7 @@ tooling() {
 }
 
 prefix() {
-  for file in "$DIR/$1"/*; do
+  for file in "$RUN/$1"/*; do
     alias "$2-$(basename "$file")"="$file"
   done
   for file in ".$BIN/$1"/*; do
@@ -53,16 +53,26 @@ prefix() {
 CHAR=
 SHELL=
 
-export ENV="$(realpath "$0")"
-export DIR="${0%/bin/env}"
-export BIN="${DIR##*/}"
-export PS1="\n\[\e[1;91m\]  \w \[\e[38;5;52m\]\$\[\e[0m\] \[\e]12;#999900\007\]\[\e]12;#999900\007\]\[\e[3 q\]"
+export ENV="$(realpath "$0" 2>/dev/null || echo "$ENV")"
+export RUN="${ENV%/bin/env}"
+export BIN="${RUN##*/}"
+export PS1="\n\[\e[1;91m\]  \$PWD \[\e[38;5;52m\]\$\[\e[0m\] \[\e]12;#999900\007\]\[\e]12;#999900\007\]\[\e[3 q\]"
 
 prefix bin "$BIN"
 prefix tools tool
 prefix agents agent
 
-[ "$1" = "sh" ] && SHELL="$1" && shift
-[ -n "$1" ] && CHAR="${1:0:1}"
-[ "$CHAR" =  "{" ] && tooling "$1" && shift
+if [ "${1#sh }" != "$1" ]; then
+  SHELL="sh"
+  JSON="${1#sh }"
+  JSON="${JSON#\'}"
+  JSON="${JSON%\'}"
+  shift
+  tooling "$JSON"
+else
+  [ "$1" = "sh" ] && { SHELL="$1"; shift; }
+  [ -n "$1" ] && CHAR="${1:0:1}"
+  [ "$CHAR" =  "{" ] && { tooling "$1"; shift; }
+fi
+
 [ -n "$SHELL" ] && source "$@"

@@ -87,7 +87,8 @@ update)
 
   exec docker run --rm $flags \
     -m ${GELLI_MEMORY}m \
-    -v "$PWD:/work" \
+    -v $PWD:/work \
+    -v ~/.vimrc:/etc/vim/vimrc \
     -v gelli-models:/models \
     -v gelli-loras:/loras \
     -e GELLI_PORT \
