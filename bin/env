@@ -1,5 +1,4 @@
 #!/usr/bin/env sh
-set -e
 
 error() {
   echo $@ >&2
@@ -54,7 +53,7 @@ prefix() {
 CHAR=
 SHELL=
 
-export ENV="$0"
+export ENV="$(realpath "$0")"
 export DIR="${0%/bin/env}"
 export BIN="${DIR##*/}"
 export PS1="\n\[\e[1;91m\]  \w \[\e[38;5;52m\]\$\[\e[0m\] \[\e]12;#999900\007\]\[\e]12;#999900\007\]\[\e[3 q\]"
@@ -66,4 +65,4 @@ prefix agents agent
 [ "$1" = "sh" ] && SHELL="$1" && shift
 [ -n "$1" ] && CHAR="${1:0:1}"
 [ "$CHAR" =  "{" ] && tooling "$1" && shift
-[ -n "$SHELL" ] && exec sh "$@"
+[ -n "$SHELL" ] && source "$@"

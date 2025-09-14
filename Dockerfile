@@ -35,7 +35,8 @@ COPY . /gelli/
 # Set version
 ARG VERSION
 RUN printf 'GELLI %s\n' "$VERSION" > /etc/VERSION; \
-    mv /gelli/bin/start /usr/bin/gelli
+    printf '#!/gelli/bin/env sh\ngelli-start "$@"' > /usr/bin/gelli; \
+    chmod +x /usr/bin/gelli
 
 # Set default model
 ENV ENV=/gelli/bin/env \
