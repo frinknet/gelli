@@ -1,5 +1,5 @@
-#!/bin/env sh
-set -eu
+#!/usr/bin/env sh
+set -e
 
 error() {
   echo $@ >&2
@@ -26,7 +26,7 @@ safety() {
   echo ".${dir#$PWD}"
 }
 
-define() {
+tooling() {
   [ ! -t 0 ] && echo "${1:-"{}"}" | exec jq .
 
   json=$(cat)
@@ -42,12 +42,28 @@ define() {
   done
 }
 
-GELLI_SHELL=
+prefix() {
+  for file in "$DIR/$1"/*; do
+    alias "$2-$(basename "$file")"="$file"
+  done
+  for file in ".$BIN/$1"/*; do
+    alias "$2-$(basename "$file")"="$file"
+  done
+}
+
+CHAR=
+SHELL=
 
 export ENV="$0"
+export DIR="${0%/bin/env}"
+export BIN="${DIR##*/}"
 export PS1="\n\[\e[1;91m\]  \w \[\e[38;5;52m\]\$\[\e[0m\] \[\e]12;#999900\007\]\[\e]12;#999900\007\]\[\e[3 q\]"
-export PATH="$PWD/.gelli/bin:${0%/*}:$PATH"
 
-[ "$1" =  "sh" ] && export GELLI_SHELL=1 && shift
-[ -n "$1" ] && define "$1" && shift
-[ -n "$GELLI_SHELL" ] && exec sh "$@"
+prefix bin "$BIN"
+prefix tools tool
+prefix agents agent
+
+[ "$1" = "sh" ] && SHELL="$1" && shift
+[ -n "$1" ] && CHAR="${1:0:1}"
+[ "$CHAR" =  "{" ] && tooling "$1" && shift
+[ -n "$SHELL" ] && exec sh "$@"

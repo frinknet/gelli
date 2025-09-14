@@ -18,20 +18,20 @@ OLD_ID="$(docker image inspect -f '{{.Id}}' "$IMAGE" 2>/dev/null || true)"
 if [ "$VER" = "local" ]; then
   VERSION="local-$(git rev-parse --short HEAD 2>/dev/null || echo local)"
 
-  docker build --build-arg VERSION=$VERSION -t "$IMAGE:$VER" .
-  docker image tag "$IMAGE:$VER" "$IMAGE"
+  docker build --build-arg VERSION=$VERSION -t "$REPO:$VER" .
 elif ! docker image pull "$REPO:$VER"; then
   echo "could not pull docker image $REPO:$VER" >&2
   exit 1
-else
-  docker image tag "$REPO:$VER" "$IMAGE"
 fi
+
+docker image tag "$REPO:$VER" "$IMAGE"
 
 NEW_ID="$(docker image inspect -f '{{.Id}}' "$IMAGE")"
 
 if [ -n "${OLD_ID:-}" ] && [ "$OLD_ID" != "$NEW_ID" ]; then
   docker image rm "$OLD_ID" >/dev/null 2>&1 || true
 fi
+
 docker image prune -f >/dev/null 2>&1 || true
 
 # Ensure persistent Docker volumes exist

@@ -20,27 +20,27 @@ RUN chmod +x /src/build/bin/*
 
 # Final lean stage
 FROM alpine:latest
-RUN apk add --no-cache jq vim git curl libstdc++ libgomp && \
-    mkdir -p /models /loras /work /tools /usr/local/lib
-
-# Set version
-ARG VERSION
-RUN test -n "$VERSION" && printf 'GELLI %s\n' "$VERSION" > /etc/VERSION
-
 # Copy ALL binaries in one layer
 COPY --from=build /src/build/bin/llama* /usr/local/bin/
 
 # Copy ALL shared libraries in one layer  
 COPY --from=build /src/build/bin/*.so /usr/local/lib/
 
-# Add tools directory
-COPY ./* /gelli/
+RUN apk add --no-cache jq vim git curl libstdc++ libgomp && \
+    mkdir -p /models /loras /work /tools /usr/local/lib
 
-# Set defaults environment
+# Add tools directory
+COPY . /gelli/
+
+# Set version
+ARG VERSION
+RUN printf 'GELLI %s\n' "$VERSION" > /etc/VERSION; \
+    mv /gelli/bin/start /usr/bin/gelli
+
+# Set default model
 ENV ENV=/gelli/bin/env \
-    GELLI_PORT=7771 \
-    GELLI_DEFAULT=ol:qwen3:1.5b
+GELLI_DEFAULT=ol:qwen3:1.5b
 
 # Ready to rock
 WORKDIR /work
-ENTRYPOINT ["/gelli/bin/gelli"]
+ENTRYPOINT ["gelli"]
