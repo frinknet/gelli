@@ -7,7 +7,6 @@
 } > /dev/null 2>&1
 
 [ -f ".env" ] && source .env
-#[ -f ".$BIN/bin/env" ] && ln -sf "$PWD/.$BIN/bin/env" "/gelli/bin/env"
 
 CMD="$(alias "$BIN-$1" 2>/dev/null | cut -d\' -f2)"
 

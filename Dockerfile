@@ -39,9 +39,9 @@ RUN <<ENTRYBIN
 
 printf 'GELLI %s\n' "$VERSION" > /$IMAGE/VERSION; \
 
-cat > /usr/bin/$IMAGE <<'CLI'
+cat > /usr/bin/$IMAGE <<CLI
 #!/$IMAGE/bin/env sh
-$IMAGE-start "$@"
+$IMAGE-start "\$@"
 CLI
 
 chmod +x /usr/bin/$IMAGE

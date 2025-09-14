@@ -39,6 +39,8 @@ tooling() {
       *) eval "$key='$value'"
     esac
   done
+
+  export GELLI_TOOL="${0##*/}"
 }
 
 prefix() {
@@ -50,12 +52,12 @@ prefix() {
   done
 }
 
-CHAR=
 SHELL=
 
-export ENV="$(realpath "$0" 2>/dev/null || echo "$ENV")"
-export RUN="${ENV%/bin/env}"
-export BIN="${RUN##*/}"
+[ -z "$ENV" ] && export ENV="$(realpath "$0" 2>/dev/null || echo "$ENV")"
+[ -z "$RUN" ] && export RUN="${ENV%/bin/env}"
+[ -z "$BIN" ] && export BIN="${RUN##*/}"
+
 export PS1="\n\[\e[1;91m\]  \$PWD \[\e[38;5;52m\]\$\[\e[0m\] \[\e]12;#999900\007\]\[\e]12;#999900\007\]\[\e[3 q\]"
 
 prefix bin "$BIN"
@@ -70,9 +72,13 @@ if [ "${1#sh }" != "$1" ]; then
   shift
   tooling "$JSON"
 else
+  CHAR=
+
   [ "$1" = "sh" ] && { SHELL="$1"; shift; }
   [ -n "$1" ] && CHAR="${1:0:1}"
   [ "$CHAR" =  "{" ] && { tooling "$1"; shift; }
+
+  unset CHAR
 fi
 
 [ -n "$SHELL" ] && source "$@"
