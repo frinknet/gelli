@@ -14,6 +14,9 @@ RUN git clone --depth 1 "https://github.com/ggml-org/llama.cpp" .
 RUN find . -type f -name "*.cpp" -exec sed -i 's/<linux\/limits.h>/<limits.h>/g' {} +
 RUN find . -type f -name "*.c"	 -exec sed -i 's/<linux\/limits.h>/<limits.h>/g' {} +
 
+# Drop optimization just for ggml-vulkan big files to reduce cc1plus RAM
+RUN sed -i 's@add_library(ggml-vulkan@set_source_files_properties(ggml/src/ggml-vulkan/ggml-vulkan.cpp PROPERTIES COMPILE_OPTIONS "-O1")\nset_source_files_properties(ggml/src/ggml-vulkan/ggml-vulkan-shaders.cpp PROPERTIES COMPILE_OPTIONS "-O1")\n&@' ggml/CMakeLists.txt
+
 # glslc shim: replace a standalone "-O" with "-O0" and preserve all args
 RUN cat > /usr/local/bin/glslc <<'SH' && chmod +x /usr/local/bin/glslc
 #!/bin/sh
@@ -70,9 +73,9 @@ COPY --from=build /src/build/bin/*.so /usr/local/lib/
 
 RUN apk add --no-cache \
   jq vim git curl libstdc++ libgomp \
-  vulkan-loader mesa-vulkan-drivers \
-  mesa-vulkan-intel mesa-vulkan-layers \
-  vulkan-tools
+  vulkan-loader mesa-vulkan-layers vulkan-tools \
+  mesa-vulkan-intel mesa-vulkan-ati mesa-vulkan-swrast
+
 
 RUN mkdir -p /models /loras /work /tools /usr/local/lib \
  && curl -sSLo /usr/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 \
