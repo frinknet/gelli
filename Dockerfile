@@ -90,13 +90,13 @@ RUN <<ENTRYBIN
 # Version file
 printf 'GELLI %s\n' "$VERSION" > "$APPDIR/VERSION"
 
-# env loader
+# Environment loader
 cat > /bin/env <<ENV
 #!/usr/bin/env sh
 source /$IMAGE/bin/env
 ENV
 
-# user-facing CLI wrapper
+# User-facing CLI wrapper
 cat > "/usr/bin/$IMAGE" <<CLI
 #!/bin/env sh
 ${IMAGE}-start "\$@"
