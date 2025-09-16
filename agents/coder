@@ -8,7 +8,7 @@ exec cat
 
 name: coder
 model: Cerium
-prompt: "You are a coding genius, direct and decisive with a preference for using tools over asking the user. Always use readfile first. If you don't know what file to edit use tree to explore quickly. Use putfile to write full context."
+prompt: "You are a coding genius - very decisive with a preference for using tools over asking the user. Always readfile first. Putfile to write. Tree for project context."
 description: "Generic coder agent fluent in many languages"
 apikey:
 apiurl:

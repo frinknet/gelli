@@ -3,121 +3,115 @@ set -e
 
 # USAGE: gelli models - Manage Models
 # 
-# gelli models list [model]     - Lists  models
-# gelli models import [model]   - Import models
-# gelli models export [model]   - Export models
-# gelli models delete [model]   - Delete models
+# gelli models list [model]			- Lists  models
+# gelli models import [model]		- Import models
+# gelli models export [model]		- Export models
+# gelli models delete [model]		- Delete models
 # gelli models download [model] - Downloads models
 # 
-#   Use ol:model:tag for Ollama model.
-#   Use hf:repo:quant:file for HuggingFace models.
+#		Use ol:model:tag for Ollama model.
+#		Use hf:repo:quant:file for HuggingFace models.
 # 
-#   Only works with .gguf files
+#		Only works with .gguf files
 
 parse_ol() {
-  spec=${1#ol:}
-  slug=$(printf '%s\n' "$spec" | cut -d: -f1)
-  tag=$(printf '%s\n' "$spec" | cut -s -d: -f2)
-  tag="${tag:-latest}"
-  dest="/models/$(echo "$slug:$tag" | sed 's#[:/\]#-#g').gguf"
+	spec=${1#ol:}
+	slug=$(printf '%s\n' "$spec" | cut -d: -f1)
+	tag=$(printf '%s\n' "$spec" | cut -s -d: -f2)
+	tag="${tag:-latest}"
+	dest="/models/$(echo "$slug:$tag" | sed 's#[:/\]#-#g').gguf"
 
-  [ -f "$dest" ] && { echo "$dest"; return; }
+	[ -f "$dest" ] && { echo "$dest"; return; }
 
-  manifest="https://registry.ollama.ai/v2/library/${slug}/manifests/${tag}"
+	manifest="https://registry.ollama.ai/v2/library/${slug}/manifests/${tag}"
 
-  curl -sLX HEAD "$manifest" > /dev/null || error FAILED MANIFEST $manifest
+	curl -sLX HEAD "$manifest" > /dev/null || error FAILED MANIFEST $manifest
 
-  digest=$(curl -fsSL "$manifest" | jq -r '.layers[0].digest')
-  url="https://registry.ollama.ai/v2/library/${slug}/blobs/$digest"
+	digest=$(curl -fsSL "$manifest" | jq -r '.layers[0].digest')
+	url="https://registry.ollama.ai/v2/library/${slug}/blobs/$digest"
 
-  echo "$dest" "$url"
+	echo "$dest" "$url"
 }
 
 parse_hf() {
-  spec=${1#hf:}
-  repo=$(printf '%s\n' "$spec" | cut -d: -f1)
-  quant=$(printf '%s\n' "$spec" | cut -s -d: -f2)
-  file=$(printf '%s\n' "$spec" | cut -s -d: -f3)
-  file="${file:-model.gguf}"
-  dest="/models/$(echo "${repo//\//-}-${quant}-${file}" | sed 's#[:/\]#-#g')a"
+	spec=${1#hf:}
+	repo=$(printf '%s\n' "$spec" | cut -d: -f1)
+	quant=$(printf '%s\n' "$spec" | cut -s -d: -f2)
+	file=$(printf '%s\n' "$spec" | cut -s -d: -f3)
+	file="${file:-model.gguf}"
+	dest="/models/$(echo "${repo//\//-}-${quant}-${file}" | sed 's#[:/\]#-#g')a"
 
-  [ -f "$dest" ] && { echo "$dest"; return; }
+	[ -f "$dest" ] && { echo "$dest"; return; }
 
-  url="https://huggingface.co/$repo/resolve/main/$file.gguf"
+	url="https://huggingface.co/$repo/resolve/main/$file.gguf"
 
-  echo "$dest" "$url"
+	echo "$dest" "$url"
 }
 
 parse() {
-  case "$1" in
-    ol:*) parse_ol "$1";;
-    hf:*) parse_hf "$1";;
-    *) echo "/models/${1##*/}.gguf";;
-  esac
+	case "$1" in
+		ol:*) parse_ol "$1";;
+		hf:*) parse_hf "$1";;
+		*) echo "/models/${1##*/}.gguf";;
+	esac
 }
 
 fetch() {
-  dest="$1"
-  url="$2"
+	dest="$1"
+	url="$2"
 
-  [ -f "$dest" ] || curl -fLo "$dest" "$url" || error FAILED MODEL FETCH $url
-  [ -f "$dest" ] && basename "${dest%.*}"
+	[ -f "$dest" ] || curl -fLo "$dest" "$url" || error FAILED MODEL FETCH $url
+	[ -f "$dest" ] && basename "${dest%.*}"
 }
 
 download() {
-  for arg in "${@:-}"; do
-    fetch $(parse "$arg")
-  done
+	for arg in "${@}"; do
+		fetch $(parse "$arg") || error MISSING $arg
+	done
 }
 
 outfile() {
-  src="$1"
-  dest="/work/${1##*/}"
+	src="$1"
+	dest="/work/${1##*/}"
 
-  mv "$src" "$dest" 
+	mv "$src" "$dest" 
 }
 
 export() {
-  for arg in "$@"; do
-    outfile $(parse "$arg") || error MISSING $arg
-  done
+	for arg in "$@"; do
+		outfile $(parse "$arg") || error MISSING $arg
+	done
 }
 
 infile() {
-  src="$1"
-  dest="/models/${1##*/}"
+	src="$1"
+	dest="/models/${1##*/}"
 
-  mv "$src" "$dest" 
+	mv "$src" "$dest" 
 }
 
 import() {
-  for arg in "$@"; do
-    infile $(parse "$arg") || error MISSING $arg
-  done
+	for arg in "$@"; do
+		infile $(parse "$arg") || error MISSING $arg
+	done
 }
 
 list() {
-  glob="${1:-*}"
+	glob="${1:-*}"
 
-  cd /models
+	cd /models
 
-  for f in $glob; do
-    [ -f "$f" ] && printf '%s\n' "${f%.*}"
-  done
+	for f in $glob; do
+		[ -f "$f" ] && printf '%s\n' "${f%.*}"
+	done
 }
 
 delete() {
-  for arg in "$@"; do
-    file=$(parse "$arg")
+	for arg in "$@"; do
+		file=$(parse "$arg")
 
-    rm "$file" || error FAILED TO REMOVE $arg
-  done
-}
-
-error() {
-  echo $@ >&2
-
-  exit 1
+		rm "$file" || error FAILED TO REMOVE $arg
+	done
 }
 
 CMD="$1"
@@ -125,10 +119,10 @@ CMD="$1"
 shift
 
 case "$CMD" in
-  list) shift; list "$@";;
-  delete) shift; delete "$@";;
-  download) download "$@";;
-  import) import "$@";;
-  export) export "$@";;
-  *) exec gelli-help models;;
+	list) shift; list "$@";;
+	delete) shift; delete "$@";;
+	download) download "$@";;
+	import) import "$@";;
+	export) export "$@";;
+	*) exec gelli-help models;;
 esac

@@ -3,7 +3,7 @@
 {
   getent passwd "$UID" || adduser -u "$UID" -g "$GID" -h "/work/.$BIN" -D "$BIN"
   getent group "$GID" || addgroup -g "$GID" "$BIN"
-  echo ".*" > /work/.$BIN/.gitignore
+  [ -d "/work/.$BIN" ] && echo ".*" > /work/.$BIN/.gitignore
 } > /dev/null 2>&1
 
 [ -f ".env" ] && source .env

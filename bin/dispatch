@@ -20,11 +20,12 @@ fi
 
 jsonparse < <(yamlparse "$AGENT")
 
-SYSTEM="# Identity\n${prompt}\n\n# User's Goal\n$INSTRUCT\n\n# Instruction\n Use your provided tools to achieve the User's Goal when I say begin."
+SYSTEM="# Identity\n${prompt}\n\n# Query\n$INSTRUCT\n\n# Instruction\n Use tools to immediately answer the query."
 BRANCH="$BIN-$AGENT"
 PORT=${GELLI_PORT:-7771}
 MODEL="${model}"
 LORAS="${lroas}"
+TEMP="${temp}"
 FLAGS="$GELLI_LLAMA_FLAGS"
 BRANCH="${GELLI_BRANCH:-gelli-coder}"
 TOOLS=""
@@ -60,8 +61,15 @@ call-ai() {
 }
 
 call-fn() {
-  if alias "tool-$1" &> /dev/null; then
-    printf "$2" | eval "tool-$1"
+  local tool
+
+  case "$1" in
+  *_agent) tool="tool-$1";;
+  *) tool="tool-$1";;
+  esac
+
+  if alias "$tool" &> /dev/null; then
+    printf "$2" | eval "$tool"
 
     [ "$?" = 0 ] || echo "Error: failed $1($2)"
   else
@@ -89,19 +97,15 @@ if [ -n "$LORAS" ]; then
   for f in $LORAS; do FLAGS="$FLAGS --lora /loras/$f.gguf"; done
 fi
 
-if [ -z "$GELLI_API_URL" ]; then
-  GELLI_TEMP=${GELLI_TEMP:-0.1}
+[ -z "$GELLI_API_URL" ] && gelli-serve $MODEL $LORAS &> /dev/null &
 
-  gelli-serve $MODEL $LORAS > /dev/null 2>&1 &
-
-  SERVER_PID=$!
-
-  until curl -sf "$API/health" > /dev/null; do
-    sleep 0.2
-  done
-fi
+SERVER_PID=$!
 
 branch $BRANCH
+
+until curl -sf "$API/health" > /dev/null; do
+  sleep 2
+done
 
 # Initialize chat history
 messages='[
@@ -192,7 +196,7 @@ for iter in $(seq 1 "$MAX"); do
       has_talked=""
 
     elif [ "$finish" = "stop" ]; then
-      echo
+      echo DONE
       echo
       exit 0
     elif [ -n "$finish" ]; then

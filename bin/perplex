@@ -11,15 +11,7 @@ if [ -z "$MODEL" ]; then
 fi
 
 MODEL=$(gelli-models download "$MODEL")
-
-if [ -n "$LORAS" ]; then
-    LORA_NAMES=""
-
-    for lora_spec in $LORAS; do
-        LORA_NAME="${lora_spec%%:*}" LORA_NAMES="$LORA_NAMES $LORA_NAME" done
-
-    gelli-loras $LORA_NAMES
-fi
+LORAS=$(gelli-loras download "$LORAS")
 
 MODEL_FILE="/models/$MODEL.gguf"
 

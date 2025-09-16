@@ -36,9 +36,9 @@ jsonparse() {
     value=$(echo "$json" | jq -r ".\"$key\" // empty")
 
     case "$key" in
-      tools|agents) [ -n "$value" ] && eval "$key=\$(echo '$value' | jq -r '.[]')";;
-      dir|file) [ -n "$value" ] && eval "$key=\$(safety '$value')";;
-      *) eval "$key='$value'"
+      tools|agents|loras) [ -n "$value" ] && eval "$key=\$(echo \"\$value\" | jq -r '.[]')";;
+      dir|file) [ -n "$value" ] && eval "$key=\$(safety \"\$value\")";;
+      *) eval "$key=\"\$value\""
     esac
   done
 }
@@ -93,25 +93,30 @@ dispatch() {
 
 prefix() {
   for file in "$RUN/$1"/*; do
+    [ -f "$file" ] || continue
     alias "$2-$(basename "$file")"="$file"
   done
   for file in "$USR/$1"/*; do
+    [ -f "$file" ] || continue
     alias "$2-$(basename "$file")"="$file"
   done
 }
 
 cleanup() {
-    cd /work
+  echo CLEANUP $SERVER_PID
 
-    [ -n "$SERVER_PID" ] && kill "$SERVER_PID" 2>/dev/null || true
+  cd /work
 
-    wait "$SERVER_PID" 2>/dev/null || true
+  [ -n "$SERVER_PID" ] && kill "$SERVER_PID" 2>/dev/null || true
 
-    [ -d "/tmp/$BRANCH" ] && git worktree remove --force "/tmp/$BRANCH" 2>/dev/null || true
+  wait "$SERVER_PID" 2>/dev/null || true
+
+  [ -d "/tmp/$BRANCH" ] && git worktree remove --force "/tmp/$BRANCH" 2>/dev/null || true
 }
 trap cleanup EXIT SIGTERM SIGINT
 
 branch() {
+  echo RUNNING $SERVER_PID
   [ -d ".git" ] || return
 
   export BRANCH="$1"
@@ -127,6 +132,7 @@ branch() {
   git switch "$BRANCH" &> /dev/null || git switch -c "$BRANCH" &> /dev/null
 }
 
+BRANCH=
 SHELL=
 
 [ -z "$ENV" ] && export ENV="$(realpath "$0" 2>/dev/null || echo "$ENV")"
@@ -144,15 +150,20 @@ case "$1" in
 "sh --agent")
   shift
   dispatch "$1"
-  source "$@"
   ;;
 "sh --tool")
   shift
   tooling "$1"
-  source "$@"
+  cmd="$1"
+  shift
+  set -- "$@"
+  source "$cmd"
   ;;
 "sh")
   shift
-  source "$@"
+  cmd="$1"
+  shift
+  set -- "$@"
+  source "$cmd"
   ;;
 esac

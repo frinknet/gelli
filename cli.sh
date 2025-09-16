@@ -85,6 +85,21 @@ update)
 
   [ -t 0 ] && flags="${flags}t"
 
+  # Pass GPU only if available
+  if [ -d /dev/dri ]; then
+    flags="$flags --device=/dev/dri:/dev/dri"
+
+    # Add host video/render groups if they exist (perm fixes)
+    VID_GID=$(getent group video 2>/dev/null | cut -d: -f3)
+    REN_GID=$(getent group render 2>/dev/null | cut -d: -f3)
+
+    [ -n "$VID_GID" ] && flags="$flags --group-add $VID_GID"
+    [ -n "$REN_GID" ] && flags="$flags --group-add $REN_GID"
+
+    # Optional Mesa/Vulkan nudges
+    [ -n "$MESA_VK_DEVICE_SELECT" ] && flags="$flags -e MESA_VK_DEVICE_SELECT=$MESA_VK_DEVICE_SELECT"
+  fi
+
   exec docker run --rm $flags \
     -m ${GELLI_MEMORY}m \
     -v $PWD:/work \

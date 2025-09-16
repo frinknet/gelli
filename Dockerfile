@@ -1,7 +1,9 @@
 # syntax=docker/dockerfile:1
 # GELLI - General Edge Local Llama Instances
 FROM alpine:latest AS build
-RUN apk add --no-cache build-base cmake git bash curl-dev
+RUN apk add --no-cache \
+  build-base cmake git bash curl-dev \
+  vulkan-loader-dev vulkan-headers shaderc glslang spirv-tools
 
 WORKDIR /src
 
@@ -12,8 +14,45 @@ RUN git clone --depth 1 "https://github.com/ggml-org/llama.cpp" .
 RUN find . -type f -name "*.cpp" -exec sed -i 's/<linux\/limits.h>/<limits.h>/g' {} +
 RUN find . -type f -name "*.c"	 -exec sed -i 's/<linux\/limits.h>/<limits.h>/g' {} +
 
-# Are the redundant?
-RUN cmake -B build -DCMAKE_BUILD_TYPE=Release 
+# glslc shim: replace a standalone "-O" with "-O0" and preserve all args
+RUN cat > /usr/local/bin/glslc <<'SH' && chmod +x /usr/local/bin/glslc
+#!/bin/sh
+set -e
+
+new=''
+
+while [ "$#" -gt 0 ]; do
+  if [ "$1" = "-O" ]; then
+    arg='-O0'
+  else
+    arg="$1"
+  fi
+
+  new="$new '$(printf "%s" "$arg" | sed "s/'/'\"'\"'/g")'"
+
+  shift
+done
+
+# shellcheck disable=SC2086
+eval "set -- $new"
+
+exec /usr/bin/glslc "$@"
+SH
+
+# Build for all linux headers
+RUN cmake -B build \
+  -DGGML_CUBLAS=ON \
+  -DGGML_CLBLAST=ON \
+  -DGGML_HIPBLAS=ON \
+  -DGGML_VULKAN=ON \
+  -DCMAKE_CUDA_ARCHITECTURES=all-major \
+  -DLLAMA_NATIVE=OFF \
+  -DLLAMA_BUILD_TESTS=OFF \
+  -DLLAMA_BUILD_EXAMPLES=ON \
+  -DCMAKE_CXX_FLAGS_RELEASE="-O2" \
+  -DVulkan_GLSLC_EXECUTABLE=/usr/local/bin/glslc \
+  -DCMAKE_BUILD_TYPE=Release
+
 RUN cmake --build build --config Release -j$(nproc)
 
 # Final lean stage
@@ -29,8 +68,13 @@ COPY --from=build /src/build/bin/llama* /usr/local/bin/
 # Copy ALL shared libraries in one layer  
 COPY --from=build /src/build/bin/*.so /usr/local/lib/
 
-RUN apk add --no-cache jq vim git curl libstdc++ libgomp \
- && mkdir -p /models /loras /work /tools /usr/local/lib \
+RUN apk add --no-cache \
+  jq vim git curl libstdc++ libgomp \
+  vulkan-loader mesa-vulkan-drivers \
+  mesa-vulkan-intel mesa-vulkan-layers \
+  vulkan-tools
+
+RUN mkdir -p /models /loras /work /tools /usr/local/lib \
  && curl -sSLo /usr/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 \
  && chmod +x /usr/bin/yq
 
@@ -59,7 +103,7 @@ ENTRYBIN
 
 # Set default model
 ENV ENV=/gelli/bin/env \
-GELLI_DEFAULT=ol:qwen3:1.5b
+GELLI_DEFAULT=ol:qwen3:1.7b
 
 # Ready to rock
 WORKDIR /work
