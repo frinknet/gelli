@@ -84,7 +84,10 @@ RUN mkdir -p /models /loras /work /tools /usr/local/lib \
 # Add tools directory
 COPY . /$IMAGE/
 
+# Wrapper + entrypoint
 RUN <<'ENTRYBIN'
+set -e
+mkdir -p "$IMAGE/bin"
 
 # Version file
 printf 'GELLI %s\n' "$VERSION" > "$APPDIR/VERSION"
@@ -95,16 +98,18 @@ cat > /bin/env <<ENV
 source /$IMAGE/bin/env
 ENV
 
-cat > /usr/bin/$IMAGE <<CLI
+# user-facing CLI wrapper
+cat > "/usr/bin/$IMAGE" <<CLI
 #!/bin/env sh
-$IMAGE-start "\$@"
+${IMAGE}-start "\$@"
 CLI
 
 chmod +x /bin/env
-chmod +x /usr/bin/$IMAGE
-ln /usr/bin/$IMAGE /bin/entrypoint
+chmod +x "/usr/bin/$IMAGE"
+ln -sf "/usr/bin/$IMAGE" /bin/entrypoint
 
 ENTRYBIN
+
 
 # Set default model
 ENV ENV=/gelli/bin/env \
