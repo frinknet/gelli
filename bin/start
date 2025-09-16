@@ -1,4 +1,4 @@
-#!/gelli/bin/env sh
+#!/bin/env sh
 
 {
   getent passwd "$UID" || adduser -u "$UID" -g "$GID" -h "/work/.$BIN" -D "$BIN"
@@ -7,16 +7,18 @@
 } > /dev/null 2>&1
 
 [ -f ".env" ] && source .env
-
-CMD="$(alias "$BIN-$1" 2>/dev/null | cut -d\' -f2)"
-
+[ -z "$CMD" ] && CMD="$(alias "agent-$1" 2>/dev/null | cut -d\' -f2)"
+[ -n "$CMD" ] && shift && set -- dispatch "$CMD" $@ && unset CMD
+[ -z "$CMD" ] && CMD="$(alias "$BIN-$1" 2>/dev/null | cut -d\' -f2)"
 [ -z "$CMD" ] && CMD="$RUN/bin/help"
 
 shift || true
 
-if [ "$(id -u)" -eq 0 ]; then
-  exec su "$(getent passwd "$UID" | cut -d: -f1)" -c "$CMD" "$@ || error UNKNOWN COMMAND: $1 >&2"
-else
-  exec "$CMD" "$@ || error UNKNOWN COMMAND: $1 >&2"
-fi
+exec $CMD "$@"
+exit 1
 
+if [ "$(id -u)" -eq 0 ]; then
+  exec su "$(getent passwd "$UID" | cut -d: -f1)" -c $CMD "$@"
+else
+  exec $CMD "$@"
+fi

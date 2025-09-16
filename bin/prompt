@@ -1,4 +1,4 @@
-#!/gelli/bin/env sh
+#!/bin/env sh
 set -e
 
 # USAGE: gelli prompt - Load the model and ask a question

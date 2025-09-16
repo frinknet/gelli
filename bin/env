@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 error() {
-  echo $@ >&2
+  echo "Error: $@" >&2
 
   exit 1
 }
@@ -25,33 +25,106 @@ safety() {
   echo ".${dir#$PWD}"
 }
 
-tooling() {
-  [ -t 0 ] && sed '1,/^---$/d' "$1" | exec yq e -o=json '.' && exit
+yamlparse() {
+    sed '1,/^---$/d' "$1" | yq '(.. | select(tag == "!!str")) |= envsubst' -o=json -
+}
 
-  echo moving on
-
+jsonparse() {
   json=$(cat)
 
   for key in $(echo "$json" | jq -r 'keys[]'); do
     value=$(echo "$json" | jq -r ".\"$key\" // empty")
 
     case "$key" in
-      dir) eval "$key=\$(safety '$value')";;
-      file) [ -n "$value" ] && eval "$key=\$(safety '$value')";;
+      tools|agents) [ -n "$value" ] && eval "$key=\$(echo '$value' | jq -r '.[]')";;
+      dir|file) [ -n "$value" ] && eval "$key=\$(safety '$value')";;
       *) eval "$key='$value'"
     esac
   done
+}
 
-  export GELLI_TOOL="${0##*/}"
+tools() {
+  for tool in "$@"; do
+    eval "tool-$tool" 2>/dev/null | jq -Rsc 'fromjson? | select(.) | {"type":"function","function":.}'
+  done | jq -sc '.'
+}
+
+agents() {
+  for agent in "$@"; do
+    eval "agent-$agent" 2>/dev/null | jq -Rsc 'fromjson? | select(.) | {
+      type: "function",
+      function: {
+        name: (.name + "_agent"),
+        description: .description,
+        parameters: {
+          type: "object",
+          properties: {
+            instruct: {
+              type: "string",
+              description: "Include instructions for this agent"
+            },
+            context: {
+              type: "string",
+              description: "Include context for this agent"
+            }
+          },
+          required: ["instruct"]
+        }
+      }
+    }'
+  done | jq -sc '.'
+}
+
+tooling() {
+  if [ -t 0 ]; then
+    yamlparse $1
+
+    exit
+  fi
+
+  jsonparse
+}
+
+dispatch() {
+  tooling "$1"
+
+  echo "${context:-Begin}" | exec eval "$BIN-dispatch" "$1" "$instruct"
 }
 
 prefix() {
   for file in "$RUN/$1"/*; do
     alias "$2-$(basename "$file")"="$file"
   done
-  for file in ".$BIN/$1"/*; do
+  for file in "$USR/$1"/*; do
     alias "$2-$(basename "$file")"="$file"
   done
+}
+
+cleanup() {
+    cd /work
+
+    [ -n "$SERVER_PID" ] && kill "$SERVER_PID" 2>/dev/null || true
+
+    wait "$SERVER_PID" 2>/dev/null || true
+
+    [ -d "/tmp/$BRANCH" ] && git worktree remove --force "/tmp/$BRANCH" 2>/dev/null || true
+}
+trap cleanup EXIT SIGTERM SIGINT
+
+branch() {
+  [ -d ".git" ] || return
+
+  export BRANCH="$1"
+  local dir="/tmp/$BRANCH"
+
+  git config --global --add safe.directory "$PWD" &> /dev/null
+
+  git worktree prune &> /dev/null
+  git worktree add --force "$dir" &> /dev/null
+  cd "$dir"
+
+  # Try to switch, create if doesn't exist
+  git switch "$BRANCH" &> /dev/null || git switch -c "$BRANCH" &> /dev/null
 }
 
 SHELL=
@@ -59,6 +132,7 @@ SHELL=
 [ -z "$ENV" ] && export ENV="$(realpath "$0" 2>/dev/null || echo "$ENV")"
 [ -z "$RUN" ] && export RUN="${ENV%/bin/env}"
 [ -z "$BIN" ] && export BIN="${RUN##*/}"
+[ -z "$USR" ] && export USR="$PWD/.$BIN"
 
 export PS1="\n\[\e[1;91m\]  \$PWD \[\e[38;5;52m\]\$\[\e[0m\] \[\e]12;#999900\007\]\[\e]12;#999900\007\]\[\e[3 q\]"
 
@@ -66,13 +140,19 @@ prefix bin "$BIN"
 prefix tools tool
 prefix agents agent
 
-if [ "$1" = "sh --tool" ]; then
-  export SHELL=$(which "$1")
+case "$1" in
+"sh --agent")
+  shift
+  dispatch "$1"
+  source "$@"
+  ;;
+"sh --tool")
   shift
   tooling "$1"
-elif [ "$1" = "sh" ]; then
-  export SHELL=$(which "$1")
+  source "$@"
+  ;;
+"sh")
   shift
-fi
-
-[ -n "$SHELL" ] && source "$@"
+  source "$@"
+  ;;
+esac

@@ -1,32 +1,41 @@
-#!/gelli/bin/env sh
+#!/bin/env sh
 
-# USAGE: gelli coder - Run an iteration of the coder AI
-#
-# gelli coder [model] [loras...] [-- prompt] - Run model inference with specified prompt and optional LoRAs
-#
-#   MODEL defaults to $GELLI_MODEL or ol:qwen2.5-Coder:0.5b-Instruct
-#   LORAS defaults to $GELLI_LORAS (space separated)
-#
-#   Examples:
-#
-#     gelli coder ol:qwen3:0.6b -- "Review the code base"
-#     cat file  |  gelli prompt ol:qwen2.5-Coder:0.5b-Instruct -- "can you do something with this"
+AGENT="$1"
 
-CTX_SIZE=${GELLI_CTX_SIZE:-0}
-BATCH_SIZE=${GELLI_BATCH_SIZE:-512}
-OUTPUT_SIZE=${GELLI_OUTPUT_SIZE:-999999}
+shift
 
+INSTRUCT="$@"
+CONTEXT="$INSTRUCT"
+
+[ -t 0 ] || CONTEXT=$(cat)
+
+if alias "agent-$AGENT" &> /dev/null; then
+  jq -n \
+    --arg instruct "$INSTRUCT" '{"instruct":.instruct}' \
+    --arg context "$CONTEXT" '{"context":.context}' \
+    | exec eval "agent-$AGENT"
+elif ! [ -f "$AGENT" ]; then  
+  error "agent not found"
+fi
+
+jsonparse < <(yamlparse "$AGENT")
+
+SYSTEM="# Identity\n${prompt}\n\n# User's Goal\n$INSTRUCT\n\n# Instruction\n Use your provided tools to achieve the User's Goal when I say begin."
+BRANCH="$BIN-$AGENT"
 PORT=${GELLI_PORT:-7771}
-MODEL=""
-LORAS=""
+MODEL="${model}"
+LORAS="${lroas}"
 FLAGS="$GELLI_LLAMA_FLAGS"
-PROMPT=""
 BRANCH="${GELLI_BRANCH:-gelli-coder}"
 TOOLS=""
 
 API=${GELLI_API_URL:-http://localhost:$PORT}
 KEY=${GELLI_API_KEY:-GELLI}
 MAX=${GELLI_MAX_CALLS:-25}
+
+CNNTX_SIZE=${GELLI_CTX_SIZE:-0}
+BATCH_IZE=${GELLI_BATCH_SIZE:-512}
+OUTPUT_SIZE=${GELLI_OUTPUT_SIZE:-999999}
 
 # Color codes
 C_THINK="\e[33m"    # yellow
@@ -35,25 +44,14 @@ C_ASSIST="\e[32m"   # green
 C_TOOL="\e[35m"     # magenta
 C_RESET="\e[0m"
 
-cleanup() {
-    cd /work
-
-    [ -n "$SERVER_PID" ] && kill "$SERVER_PID" 2>/dev/null || true
-
-    wait "$SERVER_PID" 2>/dev/null || true
-
-    [ -d "/tmp/$BRANCH" ] && git worktree remove --force "/tmp/$BRANCH" 2>/dev/null || true
-}
-trap cleanup EXIT SIGTERM SIGINT
-
 call-ai() {
   local post=$(jq -c -n \
-      --arg model "$MODEL" \
-      --argjson messages "${1:-"{}"}" \
-      --argjson tools "$TOOLS" \
-      '{model:$model,messages:$messages,tools:$tools,tool_choice:"auto",stream:true}')
+    --arg model "$MODEL" \
+    --argjson messages "${1:-"{}"}" \
+    --argjson tools "$TOOLS" \
+    '{model:$model,messages:$messages,tools:$tools,tool_choice:"auto",stream:true}')
 
-  #echo "$post"
+#echo "$post" | jq -sc .
 
   curl -sN "$API/v1/chat/completions" \
     -H "Authorization: Bearer $KEY" \
@@ -62,67 +60,25 @@ call-ai() {
 }
 
 call-fn() {
-  if [ -e "/usr/tools/$1" ]; then
-    "/usr/tools/$1" "$2"
+  if alias "tool-$1" &> /dev/null; then
+    printf "$2" | eval "tool-$1"
 
-    [ "$?" = 0 ] || echo "Error: unknown fail - $1($2)"
+    [ "$?" = 0 ] || echo "Error: failed $1($2)"
   else
     echo "Error: unknown tool - $1($2)"
   fi
 }
 
 list-fn() {
-  grep '^# DEF: ' /usr/tools/* | sed 's/^.*DEF: //' | jq -R 'fromjson? | select(.) | {"type":"function","function":.}' | jq -sc '.'
+  {
+    tools $tools
+    agents $agents
+  } | jq -sc 'add'
 }
-
-work-dir() {
-  [ -d ".git" ] || return
-
-  git config --global --add safe.directory "$PWD"
-
-  local dir="/tmp/$BRANCH"
-
-  git worktree prune 2>/dev/null || true
-  git worktree add --force "$dir"
-  cd "$dir"
-
-  # Try to switch, create if doesn't exist
-  git switch "$BRANCH" 2>/dev/null || git switch -c "$BRANCH"
-}
-
-while [ $# -gt 0 ]; do
-  case $1 in
-    --)
-      shift
-
-      if [ -z "$PROMPT" ]; then
-        PROMPT="$*"
-      else
-        PROMPT="$PROMPT\n\n$*"
-      fi
-
-      break
-      ;;
-    *)
-      if [ -z "$MODEL" ]; then
-        MODEL="$1"
-      else
-        LORAS="$LORAS $1"
-      fi
-      ;;
-  esac
-
-  shift
-done
 
 if [ -z "$MODEL" ]; then
   MODEL=${GELLI_MODEL:-$GELLI_DEFAULT}
   LORAS=${GELLI_LORAS:-}
-fi
-
-if [ -z "$PROMPT" ]; then
-  echo "Missing prompt..."
-  exit 1
 fi
 
 MODEL=$(gelli-models download $MODEL)
@@ -145,14 +101,12 @@ if [ -z "$GELLI_API_URL" ]; then
   done
 fi
 
-work-dir
-
-echo "$PWD"
+branch $BRANCH
 
 # Initialize chat history
 messages='[
-  {"role":"system","content":"'"${GELLI_SYSTEM_PROMPT:-"You are an expert coder. Your tools can only access files under \$PWD using relative paths. Don't fear, everything is backed up. Think quickly. Read and write full files."}"'"},
-  {"role":"user","content":"'"$PROMPT"'"}
+  {"role":"system","content":"'"$SYSTEM"'"},
+  {"role":"user","content":"'"$CONTEXT"'"}
 ]'
 
 # Initialize tool calls
@@ -160,8 +114,6 @@ tool_calls=""
 has_talked=""
 
 for iter in $(seq 1 "$MAX"); do
-#  echo "=== $iter / $MAX ==="
-
   while IFS= read -r data; do
     [ -z "$data" ] && continue
     [ "$data" = "data: [DONE]" ] && break
@@ -174,12 +126,10 @@ for iter in $(seq 1 "$MAX"); do
     # Reasoning
     if reasoning=$(echo "$delta" | jq -r '.reasoning_content // empty'); [ -n "$reasoning" ]; then
       printf "${C_THINK}%s${C_RESET}" "$reasoning"
+
     # Talking
     elif content=$(echo "$delta" | jq -r '.content // empty'); [ -n "$content" ]; then
-      if [ -z "$has_talked" ]; then
-        has_talked=1
-        echo
-      fi
+      [ -z "$has_talked" ] && has_talked=1 && echo
 
       printf "${C_ASSIST}%s${C_RESET}" "$content"
     fi

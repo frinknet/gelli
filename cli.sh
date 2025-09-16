@@ -83,7 +83,7 @@ update)
 *)
   flags="-i"
 
-  [ "${1:-}" = "shell" ] && flags="${flags}t"
+  [ -t 0 ] && flags="${flags}t"
 
   exec docker run --rm $flags \
     -m ${GELLI_MEMORY}m \

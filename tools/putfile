@@ -16,17 +16,17 @@ exec echo "✓ File written and committed: $file"
 ---
 
 name: putfile
-description: "Write content to file and commit to git"
+description: "Write content to file and commit to git. Use this to save your output after working something out. It is VERY IMPORTANT to write the whole file with as little change as possible. See readfile as a companion."
 parameters:
   type: object
   properties:
     file:
       type: string
-      description: "Filename in your work directory"
+      description: "Filename in your work directory to write. You are intentionally overwriting a file here so you need a filename. The file will be created if it doesn't exist. Any errors will be returned."
     contents:
       type: string
-      description: "File contents"
+      description: "File contents to pipe in. I'ts VERY VERY important that you provide the ENTIRE contents of this file. Otherwise bad things will happen in the code."
     comment:
       type: string
-      description: "Git commit message"
+      description: "Git commit message. Please be susinct but descriptive since this is the best way to tell your team what you've done."
   required: [file, contents, comment]

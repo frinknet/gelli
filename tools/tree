@@ -9,10 +9,10 @@ exec tree -I 'node_modules|.*' "$dir"
 name: tree
 description: "List directory tree"
 parameters:
-	type: object
-	properties:
-		dir:
-			type: string
-			description: "Base directory"
-			default: "."
-	required: []
+  type: object
+  properties:
+    dir:
+      type: string
+      description: "Base directory"
+      default: "."
+  required: []

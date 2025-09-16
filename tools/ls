@@ -7,12 +7,11 @@ ls "$dir" | exec grep -v "\..*\|node_modules"
 ---
 
 name: ls
-description: List directory
+description: "Lists a directory one layer deep. Use  to show  the files in a specific directory to understand what is there."
 parameters:
-	type: object
-	properties:
-		dir:
-			type: string
-			description: Base directory
-			default: "."
-	required: []
+  type: object
+  properties:
+    dir:
+      type: string
+      description: "Directory to list. You should avoid absolute paths since your access is sandboxed."
+  required: [dir]

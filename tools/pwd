@@ -5,4 +5,4 @@ exec pwd
 ---
 
 name: pwd
-description: "Get current working directory"
+description: "Get current working directory. This is really only here for debug purposes sicne you are sandboxed to this directory."

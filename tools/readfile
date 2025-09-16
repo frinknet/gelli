@@ -1,0 +1,25 @@
+#!/gelli/bin/env sh --tool
+
+[ ! -e "$file" ] && { echo "Error: file not found"; exit 1; }
+
+#todo check for size
+
+exec cat "$file"
+
+---
+
+name: readfile
+description: "Read file contents. Beneath this uses cat to give you the entire file contents. This will return the contents of the file verbatum. Use when you need edit a file. Companion of putfile."
+parameters:
+  type: object
+  properties:
+    file:
+      type: string
+      description: "Filename in your work directory to write. The file will be created if it doesn't exist. Any errors will be returned."
+    start:
+      type: string
+      description: "Filename in your work directory"
+    end:
+      type: string
+      description: "Filename in your work directory"
+  required: [file]
