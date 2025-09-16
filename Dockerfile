@@ -84,10 +84,12 @@ RUN mkdir -p /models /loras /work /tools /usr/local/lib \
 # Add tools directory
 COPY . /$IMAGE/
 
-RUN <<ENTRYBIN
+RUN <<'ENTRYBIN'
 
-printf 'GELLI %s\n' "$VERSION" > /$IMAGE/VERSION; \
+# Version file
+printf 'GELLI %s\n' "$VERSION" > "$APPDIR/VERSION"
 
+# env loader
 cat > /bin/env <<ENV
 #!/usr/bin/env sh
 source /$IMAGE/bin/env

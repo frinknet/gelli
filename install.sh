@@ -18,7 +18,14 @@ OLD_ID="$(docker image inspect -f '{{.Id}}' "$IMAGE" 2>/dev/null || true)"
 if [ "$VER" = "local" ]; then
   VERSION="local-$(git rev-parse --short HEAD 2>/dev/null || echo local)"
 
-  docker build --build-arg VERSION=$VERSION --build-arg IMAGE=$IMAGE -t "$REPO:$VER" .
+  docker buildx build \
+    --memory=4g \
+    --memory-swap=4g \
+    --build-arg VERSION=$VERSION \
+    --build-arg IMAGE=$IMAGE \
+    --progress=plain \
+    -t "$REPO:$VER" .
+
 elif ! docker image pull "$REPO:$VER"; then
   echo "could not pull docker image $REPO:$VER" >&2
   exit 1
