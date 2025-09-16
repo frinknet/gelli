@@ -85,9 +85,7 @@ RUN mkdir -p /models /loras /work /tools /usr/local/lib \
 COPY . /$IMAGE/
 
 # Wrapper + entrypoint
-RUN <<'ENTRYBIN'
-set -e
-mkdir -p "$IMAGE/bin"
+RUN <<ENTRYBIN
 
 # Version file
 printf 'GELLI %s\n' "$VERSION" > "$APPDIR/VERSION"
