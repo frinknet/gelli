@@ -103,8 +103,7 @@ prefix() {
 }
 
 cleanup() {
-  echo CLEANUP $SERVER_PID
-
+  echo CLEANUP $SCRIPT
   cd /work
 
   [ -n "$SERVER_PID" ] && kill "$SERVER_PID" 2>/dev/null || true
@@ -132,8 +131,8 @@ branch() {
   git switch "$BRANCH" &> /dev/null || git switch -c "$BRANCH" &> /dev/null
 }
 
+SCRIPT=
 BRANCH=
-SHELL=
 
 [ -z "$ENV" ] && export ENV="$(realpath "$0" 2>/dev/null || echo "$ENV")"
 [ -z "$RUN" ] && export RUN="${ENV%/bin/env}"

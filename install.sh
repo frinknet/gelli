@@ -20,10 +20,9 @@ if [ "$VER" = "local" ]; then
 
   docker buildx build \
     --memory=4g \
-    --memory-swap=4g \
+    --memory-swap=0g \
     --build-arg VERSION=$VERSION \
     --build-arg IMAGE=$IMAGE \
-    --progress=plain \
     -t "$REPO:$VER" .
 
 elif ! docker image pull "$REPO:$VER"; then

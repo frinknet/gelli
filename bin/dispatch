@@ -1,5 +1,7 @@
 #!/bin/env sh
 
+set -e
+
 AGENT="$1"
 
 shift
@@ -97,15 +99,21 @@ if [ -n "$LORAS" ]; then
   for f in $LORAS; do FLAGS="$FLAGS --lora /loras/$f.gguf"; done
 fi
 
-[ -z "$GELLI_API_URL" ] && gelli-serve $MODEL $LORAS &> /dev/null &
+[ -z "$GELLI_API_URL" ] && gelli-serve "$MODEL" "$LORAS" & #> /dev/null &
 
 SERVER_PID=$!
 
 branch $BRANCH
 
-until curl -sf "$API/health" > /dev/null; do
+echo "starting..."
+
+exit
+until curl -sf "$API/health"; do
   sleep 2
+  echo "waiting..."
 done
+
+echo "ready..."
 
 # Initialize chat history
 messages='[
