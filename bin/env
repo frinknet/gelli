@@ -92,7 +92,7 @@ dispatch() {
 }
 
 prefix() {
-  for file in "$RUN/$1"/*; do
+  for file in "$SYS/$1"/*; do
     [ -f "$file" ] || continue
     alias "$2-$(basename "$file")"="$file"
   done
@@ -103,7 +103,6 @@ prefix() {
 }
 
 cleanup() {
-  echo CLEANUP $SCRIPT
   cd /work
 
   [ -n "$SERVER_PID" ] && kill "$SERVER_PID" 2>/dev/null || true
@@ -131,12 +130,11 @@ branch() {
   git switch "$BRANCH" &> /dev/null || git switch -c "$BRANCH" &> /dev/null
 }
 
-SCRIPT=
 BRANCH=
 
 [ -z "$ENV" ] && export ENV="$(realpath "$0" 2>/dev/null || echo "$ENV")"
-[ -z "$RUN" ] && export RUN="${ENV%/bin/env}"
-[ -z "$BIN" ] && export BIN="${RUN##*/}"
+[ -z "$SYS" ] && export SYS="${ENV%/bin/env}"
+[ -z "$BIN" ] && export BIN="${SYS##*/}"
 [ -z "$USR" ] && export USR="$PWD/.$BIN"
 
 export PS1="\n\[\e[1;91m\]  \$PWD \[\e[38;5;52m\]\$\[\e[0m\] \[\e]12;#999900\007\]\[\e]12;#999900\007\]\[\e[3 q\]"
@@ -154,14 +152,14 @@ case "$1" in
   shift
   tooling "$1"
   cmd="$1"
-  shift
+  shift || true
   set -- "$@"
   source "$cmd"
   ;;
 "sh")
   shift
   cmd="$1"
-  shift
+  shift || true
   set -- "$@"
   source "$cmd"
   ;;

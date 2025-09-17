@@ -6,16 +6,15 @@
   [ -d "/work/.$BIN" ] && echo ".*" > /work/.$BIN/.gitignore
 } > /dev/null 2>&1
 
-[ -f ".env" ] && source .env
-[ -z "$CMD" ] && CMD="$(alias "agent-$1" 2>/dev/null | cut -d\' -f2)"
-[ -n "$CMD" ] && shift && set -- dispatch "$CMD" $@ && unset CMD
-[ -z "$CMD" ] && CMD="$(alias "$BIN-$1" 2>/dev/null | cut -d\' -f2)"
-[ -z "$CMD" ] && CMD="$RUN/bin/help"
+[ -f ".env" ] && source .env || true
+[ -z "$CMD" ] && CMD="$(alias "agent-$1" 2>/dev/null | cut -d\' -f2)" || true
+[ -n "$CMD" ] && shift && set -- dispatch "$CMD" $@ && unset CMD || true
+[ -z "$CMD" ] && CMD="$(alias "$BIN-$1" 2>/dev/null | cut -d\' -f2)" || true
+[ -z "$CMD" ] && CMD="$(alias "$BIN-help" 2>/dev/null | cut -d\' -f2)" || true
 
 shift || true
 
 exec $CMD "$@"
-exit 1
 
 if [ "$(id -u)" -eq 0 ]; then
   exec su "$(getent passwd "$UID" | cut -d: -f1)" -c $CMD "$@"

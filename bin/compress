@@ -12,7 +12,7 @@ case "$SIZE" in
   *) echo "Unknown size: $SIZE" >&2; exit 1 ;; 
 esac
 
-gelli-models download "$MODEL"
+gelli-models resolve "$MODEL"
 
 MODEL_FILE="/models/$MODEL.gguf"
 OUTFILE="/models/${MODEL%.*}-$SIZE.gguf"

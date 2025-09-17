@@ -7,7 +7,6 @@ set -e
 # gelli loras import [lora]   - Import LoRAs
 # gelli loras export [lora]   - Export LoRAs
 # gelli loras delete [lora]   - Delete LoRAs
-# gelli loras download [lora] - Downloads LoRAs
 # 
 #   Use hf:repo:file for HuggingFace LoRAs.
 # 
@@ -42,7 +41,7 @@ fetch() {
   [ -f "$dest" ] && basename "${dest%.*}"
 }
 
-download() {
+resolve() {
   for arg in "${@}"; do
     fetch $(parse "$arg") || error MISSING $arg
   done
@@ -65,7 +64,7 @@ infile() {
   src="$1"
   dest="/models/${1##*/}"
 
-  mv "$src" "$dest" 
+  [ "$src" != "$dest" ] && mv "$src" "$dest" 
 }
 
 import() {
@@ -105,7 +104,7 @@ shift
 case "$CMD" in
   list) shift; list "$@";;
   delete) shift; delete "$@";;
-  download) download "$@";;
+  resolve) resolve "$@";;
   import) import "$@";;
   export) export "$@";;
   *) exec gelli-help loras;;

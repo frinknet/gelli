@@ -8,18 +8,35 @@
 #   Commands are discovered automatically from gelli-* scripts
 #   Each command must have a USAGE comment block for documentation
 
-error() {
-  echo "$@" >&2
+DIR=$(dirname "$0")
 
-  exit 1
+[ -z "$CMD" ] && CMD=$(alias "$BIN-$1" | cut -d\' -f2)
+[ -z "$CMD" ] && CMD="$1"
+
+help() {
+  list=$(alias | grep "^$BIN" | cut -d\' -f2)
+
+  echo
+  grep -h '^# USAGE: ' $list 2>/dev/null | cut -d' ' -f3- |sort | sed "s/gelli/  $BIN/"
 }
 
-DIR=$(dirname "$0")
-CMD="$DIR/gelli-$1"
+usage() {
+  awk '
+    /^# USAGE:/ { in_usage=1; next }
+    /^$/ && in_usage { exit }
+    /^\*\// && in_usage { exit }
+    in_usage && /^#/ { 
+      gsub(/^# ?/, "  "); 
+      gsub(/gelli/, ENVIRON["BIN"]); 
+      print 
+    }
+  ' "$CMD" || error "Command not found: ${CMD%%*/}"
+}
 
-if [ -n "$1" ]; then
-  [ -f "$CMD" ] && sed -nE '/\/\* USAGE:/,/\*\// { /\/\* USAGE:/b; /\*\//b; p }' "$CMD" || error "Command not found: $1"
-else
-  grep -hP '(?<=\/\* USAGE: ).*' $DIR/gelli-* 2>/dev/null | sort
-fi
+echo
+echo ' '" Generic Edge Local Llama Interface"
+echo ' '" $(cat $SYS/VERSION) - LICENSE 0BSD"
 
+[ -n "$CMD" ] && usage $CMD || help
+
+echo

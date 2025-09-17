@@ -1,7 +1,5 @@
 #!/bin/env sh
 
-set -e
-
 AGENT="$1"
 
 shift
@@ -91,15 +89,15 @@ if [ -z "$MODEL" ]; then
   LORAS=${GELLI_LORAS:-}
 fi
 
-MODEL=$(gelli-models download $MODEL)
-LORAS=$(gelli-loras download $LORAS)
+MODEL=$(gelli-models resolve $MODEL)
+LORAS=$(gelli-loras resolve $LORAS)
 TOOLS=$(list-fn)
 
 if [ -n "$LORAS" ]; then
   for f in $LORAS; do FLAGS="$FLAGS --lora /loras/$f.gguf"; done
 fi
 
-[ -z "$GELLI_API_URL" ] && gelli-serve "$MODEL" "$LORAS" & #> /dev/null &
+[ -z "$GELLI_API_URL" ] && gelli-serve "$MODEL" "$LORAS" &> /dev/null &
 
 SERVER_PID=$!
 
@@ -107,7 +105,6 @@ branch $BRANCH
 
 echo "starting..."
 
-exit
 until curl -sf "$API/health"; do
   sleep 2
   echo "waiting..."

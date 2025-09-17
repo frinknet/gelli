@@ -8,7 +8,7 @@ if [ -z "$MODEL" ]; then
     exit 1
 fi
 
-gelli-model download "$MODEL"
+gelli-model resolve "$MODEL"
 
 echo "→ Benchmarking model: $MODEL"
 llama-benchmark --model "/models/$MODEL.gguf"

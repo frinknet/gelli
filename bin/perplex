@@ -10,8 +10,8 @@ if [ -z "$MODEL" ]; then
     exit 1
 fi
 
-MODEL=$(gelli-models download "$MODEL")
-LORAS=$(gelli-loras download "$LORAS")
+MODEL=$(gelli-models resolve "$MODEL")
+LORAS=$(gelli-loras resolve "$LORAS")
 
 MODEL_FILE="/models/$MODEL.gguf"
 

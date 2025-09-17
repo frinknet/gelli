@@ -57,8 +57,8 @@ if [ -z "$PROMPT" ]; then
   PROMPT="You are a helpful AI assistant."
 fi
 
-MODEL=$(gelli-models download $MODEL)
-LORAS=$(gelli-loras download $LORAS)
+MODEL=$(gelli-models resolve $MODEL)
+LORAS=$(gelli-loras resolve $LORAS)
 
 if [ -n "$LORAS" ]; then
   for f in $LORAS; do FLAGS="$FLAGS --lora /loras/$f.gguf"; done
