@@ -3,11 +3,11 @@ set -e
 
 MODEL=${1:-${GELLI_MODEL:-$GELLI_DEFAULT}}
 
-shift
+shift || true
 
 LORA_NAME=${1:-"checkpoint-$(date +%s)"}
 
-shift
+shift || true
 
 EXTENSIONS="$@"
 FIND_EXTS=""
@@ -30,7 +30,7 @@ find /work $FIND_EXTS  | while read -r file; do
   } >> "/tmp/${LORA_NAME}-corpus.txt"
 done
 
-MODEL$(gelli-models resolve "$MODEL")
+MODEL$(models "$MODEL")
 
 exec llama-finetune \
   --model-base "/models/${MODEL##*/}.gguf" \

@@ -33,6 +33,6 @@ done
 
 echo "→ Baking $LORAS into $MODEL"
 
-MODEL=$(gelli-models resolve $MODEL)
+MODEL=$(models $MODEL)
 
 llama-export-lora --model-base "/models/$MODEL.gguf" --model-out "$OUTPUT.gguf" $FLAGS

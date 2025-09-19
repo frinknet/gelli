@@ -1,0 +1,73 @@
+#!/bin/env sh
+set -e
+
+# USAGE: gelli agents - Manage AI Agents
+# 
+# gelli agents list [model]     - Lists installed Agents
+# gelli agents import [model]   - Import remote or local Agents
+# gelli agents export [model]   - Export Agents out of internal storage
+# gelli agents delete [model]   - Delete Agents from internal storage
+# 
+# NOTE: Imported agents are found in .gelli/agents
+
+outfile() {
+  src="$1"
+  dest="/work/${1##*/}"
+
+  mv "$src" "$dest" 
+}
+
+export() {
+  for arg in "$@"; do
+    outfile $(parse "$arg") || error "MISSING AGENT $arg"
+  done
+}
+
+infile() {
+  src="$1"
+  dir="$USR/agents"
+  dest="$dir/${1##*/}"
+
+  mkdir -p "$dir"
+
+  [ "$src" != "$dest" ] && mv "$src" "$dest" 
+}
+
+import() {
+  for arg in "$@"; do
+    infile $(parse "$arg") || error "COULD NOT IMPORT $arg"
+  done
+}
+
+list() {
+  glob="${1:-*}"
+
+  for a in $(alias | grep "^agent-" | cut -d= -f1); do
+    [[ "$a" == "$glob" ]] && file=$(aliasparse "$a")
+    [ -f "$file" ] && yamlparse "$file"
+    [ "$f" = "$name" ] i&& echo ' '" $name - $description"
+  done
+}
+
+delete() {
+  for arg in "$@"; do
+    file=$(parse "$arg")
+
+    [ "$file" = "$SYS/bin/$file" ] && error "CANNOT REMOVE INTERNAL $arg"
+
+    rm -i "$file" || error "FAILED TO REMOVE $arg"
+  done
+}
+
+CMD="$1"
+
+shift || true
+
+case "$CMD" in
+  ""|list) list "$@";;
+  delete) delete "$@";;
+  import) import "$@";;
+  export) export "$@";;
+  resolve) parse "$@";;
+  *) eval "$BIN-help agents";;
+esac

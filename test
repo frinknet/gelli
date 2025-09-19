@@ -1,0 +1,3 @@
+#!/bin/env sh
+echo "Testing if branch function exists..."
+type branch 2>/dev/null && echo "branch found" || echo "branch NOT found"

@@ -1,7 +1,0 @@
-#!/bin/env sh
-
-agent="$1"
-
-shift
-
-jq  -n	--arg instruct "$@" '{"instruct": .instruct}' | agent-$agent

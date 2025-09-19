@@ -24,7 +24,7 @@ PROMPT=""
 while [ $# -gt 0 ]; do
   case $1 in
     --)
-      shift
+      shift || true
 
       PROMPT="$*"
 
@@ -44,11 +44,11 @@ while [ $# -gt 0 ]; do
       ;;
   esac
 
-  shift
+  shift || true
 done
 
-MODEL=$(gelli-models resolve $MODEL)
-LORAS=$(gelli-loras resolve $LORAS)
+MODEL=$(models $MODEL)
+LORAS=$(loras $LORAS)
 
 if [ -n "$LORAS" ]; then
   for f in $LORAS; do FLAGS="$FLAGS --lora /loras/$f.gguf"; done

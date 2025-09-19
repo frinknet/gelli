@@ -8,7 +8,7 @@ if [ -z "$MODEL" ]; then
     exit 1
 fi
 
-gelli-model resolve "$MODEL"
+MODEL=$(models "$MODEL")
 
 echo "→ Benchmarking model: $MODEL"
-llama-benchmark --model "/models/$MODEL.gguf"
+llama-benchmark --model "$MODEL"

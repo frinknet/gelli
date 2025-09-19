@@ -2,7 +2,9 @@
 set -e
 
 MODEL="$1"
-shift
+
+shift || true
+
 LORAS="$@"
 
 if [ -z "$MODEL" ]; then
@@ -10,8 +12,8 @@ if [ -z "$MODEL" ]; then
     exit 1
 fi
 
-MODEL=$(gelli-models resolve "$MODEL")
-LORAS=$(gelli-loras resolve "$LORAS")
+MODEL=$(models "$MODEL")
+LORAS=$(loras "$LORAS")
 
 MODEL_FILE="/models/$MODEL.gguf"
 

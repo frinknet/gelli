@@ -1,12 +1,14 @@
 #!/bin/env sh
 set -e
 
-# USAGE: gelli loras - Manage LoRAs
+# USAGE: gelli loras - Manage Low Ranking Adapters
 # 
-# gelli loras list [lora]     - Lists  LoRAs
-# gelli loras import [lora]   - Import LoRAs
-# gelli loras export [lora]   - Export LoRAs
-# gelli loras delete [lora]   - Delete LoRAs
+# gelli loras [model]	       - Lists installed LoRAs
+# gelli loras import [model]   - Import remote or local LoRAs
+# gelli loras export [model]   - Export LoRAs out of internal storage
+# gelli loras delete [model]   - Delete LoRAs from internal storage
+# 
+# MODEL PATTERNS:
 # 
 #   Use hf:repo:file for HuggingFace LoRAs.
 # 
@@ -102,10 +104,10 @@ CMD="$1"
 shift
 
 case "$CMD" in
-  list) shift; list "$@";;
-  delete) shift; delete "$@";;
-  resolve) resolve "$@";;
+  ""|list) list "$@";;
+  delete) delete "$@";;
   import) import "$@";;
   export) export "$@";;
-  *) exec gelli-help loras;;
+  resolve) parse "$@";;
+  *) eval "$BIN-help loras";;
 esac

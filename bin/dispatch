@@ -1,8 +1,16 @@
 #!/bin/env sh
 
+set -eo pipefail
+
+# USAGE: gelli dispatch - Dispatch an agent with a prompt
+#
+# gelli dispatch [agent] [task]
+#
+# Use `gelli agents` to manage agents
+
 AGENT="$1"
 
-shift
+shift || true
 
 INSTRUCT="$@"
 CONTEXT="$INSTRUCT"
@@ -10,11 +18,10 @@ CONTEXT="$INSTRUCT"
 [ -t 0 ] || CONTEXT=$(cat)
 
 if alias "agent-$AGENT" &> /dev/null; then
-  jq -n \
-    --arg instruct "$INSTRUCT" '{"instruct":.instruct}' \
-    --arg context "$CONTEXT" '{"context":.context}' \
-    | exec eval "agent-$AGENT"
-elif ! [ -f "$AGENT" ]; then  
+  AGENT=$(aliasparse "$AGENT")
+fi
+
+if ! [ -f "$AGENT" ]; then  
   error "agent not found"
 fi
 
@@ -27,7 +34,7 @@ MODEL="${model}"
 LORAS="${lroas}"
 TEMP="${temp}"
 FLAGS="$GELLI_LLAMA_FLAGS"
-BRANCH="${GELLI_BRANCH:-gelli-coder}"
+BRANCH="${GELLI_BRANCH:-$BIN-${AGENT##*/}}"
 TOOLS=""
 
 API=${GELLI_API_URL:-http://localhost:$PORT}
@@ -52,8 +59,9 @@ call-ai() {
     --argjson tools "$TOOLS" \
     '{model:$model,messages:$messages,tools:$tools,tool_choice:"auto",stream:true}')
 
-#echo "$post" | jq -sc .
-
+  echo curl -sN "$API/v1/chat/completions" \
+    -H "Authorization: Bearer $KEY" \
+    -H "Content-Type: application/json"
   curl -sN "$API/v1/chat/completions" \
     -H "Authorization: Bearer $KEY" \
     -H "Content-Type: application/json" \
@@ -64,7 +72,7 @@ call-fn() {
   local tool
 
   case "$1" in
-  *_agent) tool="tool-$1";;
+  *_agent) tool="agent-${1%_agent}";;
   *) tool="tool-$1";;
   esac
 
@@ -89,8 +97,6 @@ if [ -z "$MODEL" ]; then
   LORAS=${GELLI_LORAS:-}
 fi
 
-MODEL=$(gelli-models resolve $MODEL)
-LORAS=$(gelli-loras resolve $LORAS)
 TOOLS=$(list-fn)
 
 if [ -n "$LORAS" ]; then
@@ -103,14 +109,9 @@ SERVER_PID=$!
 
 branch $BRANCH
 
-echo "starting..."
-
-until curl -sf "$API/health"; do
+until curl -sf "$API/health" &> /dev/null; do
   sleep 2
-  echo "waiting..."
 done
-
-echo "ready..."
 
 # Initialize chat history
 messages='[
@@ -123,12 +124,14 @@ tool_calls=""
 has_talked=""
 
 for iter in $(seq 1 "$MAX"); do
+  echo "$iter dude"
   while IFS= read -r data; do
     [ -z "$data" ] && continue
     [ "$data" = "data: [DONE]" ] && break
 
     finish=$(echo "${data#data: }" | jq -r '.choices[0].finish_reason // empty')
     delta=$(echo "${data#data: }" | jq -c '.choices[0].delta')
+
 
     #TODO: allow interaction
 
@@ -138,7 +141,7 @@ for iter in $(seq 1 "$MAX"); do
 
     # Talking
     elif content=$(echo "$delta" | jq -r '.content // empty'); [ -n "$content" ]; then
-      [ -z "$has_talked" ] && has_talked=1 && echo
+      [ -z "$has_talked" ] && has_talked=1 && echo -e "\n"
 
       printf "${C_ASSIST}%s${C_RESET}" "$content"
     fi
@@ -187,7 +190,6 @@ for iter in $(seq 1 "$MAX"); do
         printf "\n\n ${C_TOOL}→ %s(%s)${C_RESET}\n" "$fn_name" "$fn_args"
 
         fn_back=$(call-fn "$fn_name" "$fn_args")
-
         ms_call=$(jq -nc --arg fn_slot "$fn_slot"  --arg fn_name "$fn_name" --arg fn_args "${fn_args:-"{}"}" '{role:"assistant",tool_calls:[{index:$fn_slot,type:"function",function:{name:$fn_name,arguments:$fn_args}}]}')
         ms_back=$(jq -nc --arg fn_back "$fn_back" '{role:"tool",content:$fn_back}')
         messages=$(jq -nc --argjson messages "$messages" --argjson ms_call "$ms_call" --argjson ms_back "$ms_back" '$messages + [$ms_call,$ms_back]')
@@ -201,14 +203,15 @@ for iter in $(seq 1 "$MAX"); do
       has_talked=""
 
     elif [ "$finish" = "stop" ]; then
-      echo DONE
       echo
       exit 0
     elif [ -n "$finish" ]; then
       printf "\n\nEXIT %s\n" "$data" 
       exit 0
     fi
-  done < <(call-ai "$messages")
+  done < <(echo)
+
+  call-ai "$messages"
 
   echo
 done

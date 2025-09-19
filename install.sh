@@ -20,7 +20,6 @@ if [ "$VER" = "local" ]; then
 
   docker buildx build \
     --memory=4g \
-    --memory-swap=0g \
     --build-arg VERSION=$VERSION \
     --build-arg IMAGE=$IMAGE \
     -t "$REPO:$VER" .
@@ -67,5 +66,5 @@ chmod +x "$WRAP"
 echo
 echo "✓ installed: $WRAP"
 echo
-"$WRAP" version 
+"$WRAP" version
 echo

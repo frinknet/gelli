@@ -1,10 +1,23 @@
 #!/bin/env sh
 set -e
 
+# USAGE: gelli serve - Serve your model with Open AI endpoints
+#
+# gelli serve [model] [loras...] - Run server with Model and LoRAs
+#
+# To change port set GELLI_PORT variable
+
 TEMP=${GELLI_TEMP:-0.1}
+PARALLEL=${GELLI_PARALLEL:-1}
 CTX_SIZE=${GELLI_CTX_SIZE:-0}
 BATCH_SIZE=${GELLI_BATCH_SIZE:-512}
 OUTPUT_SIZE=${GELLI_OUTPUT_SIZE:-999999}
+
+# Scale context for parallel slots
+if [ $PARALLEL -gt 1 ] && [ $CTX_SIZE -gt 0 ]; then
+  CTX_SIZE=$((CTX_SIZE * PARALLEL))
+fi
+
 
 MODEL=${1:-${GELLI_MODEL:-$GELLI_DEFAULT}}
 
@@ -14,16 +27,17 @@ PORT=${GELLI_PORT:-7771}
 LORAS=${*:-${GELLI_LORAS:-}}
 FLAGS=""
 
-MODEL=$(gelli-models resolve $MODEL)
-LORAS=$(gelli-loras resolve $LORAS)
+MODEL=$(models $MODEL)
+LORAS=$(loras $LORAS)
 
 if [ -n "$LORAS" ]; then
   for f in $LORAS; do FLAGS="$FLAGS --lora /lora/$f.gruf"; done
 fi
 
-llama-server --model "/models/${MODEL##*/}.gguf" $FLAGS \
-  --batch-size $BATCH_SIZE \
+exec llama-server --model "$MODEL" $FLAGS \
+  --parallel $PARALLEL \
   --ctx-size $CTX_SIZE \
+  --batch-size $BATCH_SIZE \
   --predict $OUTPUT_SIZE \
   --port "$PORT" \
   --temp $TEMP \
@@ -34,4 +48,8 @@ llama-server --model "/models/${MODEL##*/}.gguf" $FLAGS \
   --min_p 0.07 \
   --flash-attn on \
   --repeat_penalty 1.2 \
+  --gpu-layers 999 \
+  --cache-type-k q4_0 \
+  --cache-type-v q4_0 \
+  --no-kv-offload \
   --rope-scaling yarn

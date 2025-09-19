@@ -1,23 +1,10 @@
 #!/bin/env sh
 
-{
-  getent passwd "$UID" || adduser -u "$UID" -g "$GID" -h "/work/.$BIN" -D "$BIN"
-  getent group "$GID" || addgroup -g "$GID" "$BIN"
-  [ -d "/work/.$BIN" ] && echo ".*" > /work/.$BIN/.gitignore
-} > /dev/null 2>&1
+swapconf
 
-[ -f ".env" ] && source .env || true
-[ -z "$CMD" ] && CMD="$(alias "agent-$1" 2>/dev/null | cut -d\' -f2)" || true
-[ -n "$CMD" ] && shift && set -- dispatch "$CMD" $@ && unset CMD || true
-[ -z "$CMD" ] && CMD="$(alias "$BIN-$1" 2>/dev/null | cut -d\' -f2)" || true
-[ -z "$CMD" ] && CMD="$(alias "$BIN-help" 2>/dev/null | cut -d\' -f2)" || true
+llama-swap \
+  --config "$BIN/swap.yaml" \
+  --listen "0.0.0.0:${GELLI_PORT}" \
+  --watch-config
 
-shift || true
-
-exec $CMD "$@"
-
-if [ "$(id -u)" -eq 0 ]; then
-  exec su "$(getent passwd "$UID" | cut -d: -f1)" -c $CMD "$@"
-else
-  exec $CMD "$@"
-fi
+SERVER_PID=$?

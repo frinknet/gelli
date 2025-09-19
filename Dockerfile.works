@@ -1,10 +1,9 @@
-# GELLI - General Edge Local Llama Instances
+# GELLI - Generic Edge Local Llama Interface
 FROM alpine:latest AS build
 RUN apk add --no-cache \
-  build-base cmake git bash curl-dev openblas-dev
-# vulkan-loader-dev vulkan-headers shaderc glslang spirv-tools
+  build-base cmake git bash curl-dev openblas-dev go
 
-WORKDIR /src
+WORKDIR /src/llama.cpp
 
 # Get llama source
 RUN git clone --depth 1 "https://github.com/ggml-org/llama.cpp" .
@@ -12,33 +11,6 @@ RUN git clone --depth 1 "https://github.com/ggml-org/llama.cpp" .
 # Fix header problem (may cause problems don't know)
 RUN find . -type f -name "*.cpp" -exec sed -i 's/<linux\/limits.h>/<limits.h>/g' {} +
 RUN find . -type f -name "*.c"	 -exec sed -i 's/<linux\/limits.h>/<limits.h>/g' {} +
-
-# glslc shim: replace a standalone "-O" with "-O0" and preserve all args
-RUN cat > /usr/local/bin/glslc <<'SH' && chmod +x /usr/local/bin/glslc
-#!/bin/sh
-set -e
-
-new=''
-
-while [ "$#" -gt 0 ]; do
-  if [ "$1" = "-O" ]; then
-    arg='-O0'
-  else
-    arg="$1"
-  fi
-
-  new="$new '$(printf "%s" "$arg" | sed "s/'/'\"'\"'/g")'"
-
-  shift
-done
-
-# shellcheck disable=SC2086
-eval "set -- $new"
-
-exec /usr/bin/glslc "$@"
-SH
-
-ENV CMAKE_BUILD_PARALLEL_LEVEL=1
 
 # Dynamic backends + BLAS + all CPUs
 RUN cmake -B build \
@@ -55,6 +27,12 @@ RUN cmake -B build \
 
 RUN cmake --build build --config Release
 
+WORKDIR /src/llama-swap
+RUN git clone --depth 1 https://github.com/mostlygeek/llama-swap .
+RUN mkdir -p proxy/ui_dist
+RUN touch proxy/ui_dist/index.html
+RUN go build -ldflags="-X main.commit=$(git rev-parse --short HEAD) -X main.version=local_$(git rev-parse --short HEAD) -X main.date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" -o /usr/local/bin/llama-swap .
+
 # Final lean stage
 FROM alpine:latest
 
@@ -63,17 +41,16 @@ ARG VERSION
 ARG IMAGE
 
 # Copy ALL binaries in one layer
-COPY --from=build /src/build/bin/llama* /usr/local/bin/
+COPY --from=build /src/llama.cpp/build/bin/llama* /usr/local/bin/
+COPY --from=build /usr/local/bin/llama-swap /usr/local/bin/
 
-# Copy ALL shared libraries in one layer  
-COPY --from=build /src/build/bin/*.so /usr/local/lib/
+# Copy ALL shared libraries in one layer
+COPY --from=build /src/llama.cpp/build/bin/*.so /usr/local/lib/
 
-RUN apk add --no-cache \
-  jq vim git curl libstdc++ libgomp \
-  vulkan-loader mesa-vulkan-layers vulkan-tools \
-  mesa-vulkan-intel mesa-vulkan-ati mesa-vulkan-swrast
+# Install dependencies
+RUN apk add --no-cache jq vim git curl libstdc++ libgomp openblas
 
-
+# YQ must be installed seperately
 RUN mkdir -p /models /loras /work /tools /usr/local/lib \
  && curl -sSLo /usr/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 \
  && chmod +x /usr/bin/yq
@@ -85,29 +62,46 @@ COPY . /$IMAGE/
 RUN <<ENTRYBIN
 
 # Version file
-printf 'GELLI %s\n' "$VERSION" > "$APPDIR/VERSION"
+printf 'GELLI %s\n' "$VERSION" > "$IMAGE/VERSION"
 
 # Environment loader
-cat > /bin/env <<ENV
+cat > /bin/env <<'ENV'
 #!/usr/bin/env sh
-source /$IMAGE/bin/env
+source $ENV
+
+case "$1" in
+"sh --agent")
+  shift
+  dispatch "$1"
+  ;;
+"sh --tool")
+  shift
+  tooling "$1"
+  cmd="$1"
+  shift || true
+  set -- "$@"
+  exec source "$cmd"
+  ;;
+"sh")
+  shift
+  cmd="$1"
+  shift || true
+  set -- "$@"
+  source "$cmd"
+  ;;
+esac
 ENV
 
-# User-facing CLI wrapper
-cat > "/usr/bin/$IMAGE" <<CLI
-#!/bin/env sh
-${IMAGE}-start "\$@"
-CLI
-
 chmod +x /bin/env
-chmod +x "/usr/bin/$IMAGE"
-ln -sf "/usr/bin/$IMAGE" /bin/entrypoint
+
+# Entrypoint runner
+ln -sf "/$IMAGE/entrypoint.sh" /bin/$IMAGE
+ln -sf "/$IMAGE/entrypoint.sh" /bin/entrypoint
 
 ENTRYBIN
 
-
 # Set default model
-ENV ENV=/gelli/bin/env \
+ENV ENV=/$IMAGE/common.sh \
 GELLI_DEFAULT=ol:qwen3:1.7b
 
 # Ready to rock

@@ -1,18 +1,18 @@
 #!/bin/env sh
 set -e
 
-# USAGE: gelli models - Manage Models
+# USAGE: gelli models - Manage installed models
 # 
-# gelli models list [model]     - Lists  models
-# gelli models import [model]   - Import models
-# gelli models export [model]   - Export models
-# gelli models delete [model]   - Delete models
+# gelli models [model]    - Lists installed models
+# gelli models import [model] - Import remote or local models
+# gelli models export [model] - Export models out of internal storage
+# gelli models delete [model] - Delete models from internal storage
 # 
 # MODEL PATTERNS:
 # 
-#   ol:model:tag - Ollama
-#   hf:repo:file - HuggingFace
-#   mr:model:quant - MRadermacher
+#   ol:model:tag    - Ollama
+#   hf:repo:file    - HuggingFace
+#   mr:model:quant  - MRadermacher
 # 
 # Only works with .gguf files
 
@@ -132,13 +132,13 @@ delete() {
 
 CMD="$1"
 
-shift
+shift || true
 
 case "$CMD" in
-  list) list "$@";;
-  delete)  delete "$@";;
+  ""|list) list "$@";;
+  delete) delete "$@";;
   import) import "$@";;
   export) export "$@";;
-  resolve) resolve "$@";;
-  *) gelli-help models;;
+  resolve) parse "$@";;
+  *) eval "$BIN-help models";;
 esac

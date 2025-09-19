@@ -1,0 +1,35 @@
+FROM alpine:latest AS build
+RUN apk add --no-cache \
+  build-base cmake git bash curl-dev openblas-dev
+  vulkan-loader-dev vulkan-headers shaderc glslang spirv-tools
+
+# glslc shim: replace a standalone "-O" with "-O0" and preserve all args
+RUN cat > /usr/local/bin/glslc <<'SH' && chmod +x /usr/local/bin/glslc
+#!/bin/sh
+set -e
+
+new=''
+
+while [ "$#" -gt 0 ]; do
+  if [ "$1" = "-O" ]; then
+    arg='-O0'
+  else
+    arg="$1"
+  fi
+
+  new="$new '$(printf "%s" "$arg" | sed "s/'/'\"'\"'/g")'"
+
+  shift
+done
+
+# shellcheck disable=SC2086
+eval "set -- $new"
+
+exec /usr/bin/glslc "$@"
+SH
+
+#MAKE VULKAN
+
+FROM frinknet/gelli:latest
+#  vulkan-loader mesa-vulkan-layers vulkan-tools \
+#  mesa-vulkan-intel mesa-vulkan-ati mesa-vulkan-swrast

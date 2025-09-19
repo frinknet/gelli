@@ -1,0 +1,22 @@
+#!/usr/bin/env sh
+
+{
+  echo "Work in the work file below. Look for FIX comments and do what is needed. Leave everything else untouched."
+  echo "# Source files"
+  echo '<<< hello.c >>>'
+  cat hello.c 
+  echo '<<< end files >>>'
+  echo "BE CAREFUL NOT TO DELETE COMENTS OR CHANGE VARIABLE NAMES!!!"
+  echo "As a .c coder respond with the hello.c ONLY!!!"
+} > /dev/null
+
+llama-cli \
+  --model /models/qwen3-0.6b.gguf \
+  --ctx-size 40192 \
+  --temp 0.1 \
+  --prompt "are you there?"
+  --no-conversation \
+  --single-turn \
+  --simple-io \
+  --no-warmup --no-display-prompt
+
