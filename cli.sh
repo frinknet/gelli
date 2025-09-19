@@ -190,7 +190,7 @@ status)
   fi
 
   # run container
-  exec docker run --rm $FLAGS \
+  docker run --rm $FLAGS \
     --network $GELLI_NETWORK \
     -v $GELLI_VOLUME:/models \
     -v $PWD:/work \
@@ -214,5 +214,8 @@ status)
     -e GID=$(id -g) \
     -e TERM \
     "$IMAGE" "$@"
+
+  echo
   ;;
 esac
+

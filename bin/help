@@ -1,41 +1,42 @@
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
-???
+#!/bin/env sh
+
+# USAGE: gelli help - show help for gelli commands
+#
+# gelli help       - List all available commands with brief descriptions
+# gelli help [cmd] - Show detailed usage for specific command
+#
+#   Commands are discovered automatically from gelli-* scripts
+#   Each command must have a USAGE comment block for documentation
+
+DIR=$(dirname "$0")
+
+[ -z "$CMD" ] && CMD=$(alias "$BIN-$1" | cut -d\' -f2)
+[ -z "$CMD" ] && CMD="$1"
+
+help() {
+  list=$(alias | grep "^$BIN" | cut -d\' -f2)
+
+  echo
+  grep -h '^# USAGE: ' $list 2>/dev/null | cut -d' ' -f3- |sort | sed "s/gelli/  $BIN/"
+}
+
+usage() {
+  awk '
+    /^# USAGE:/ { in_usage=1; next }
+    /^$/ && in_usage { exit }
+    /^\*\// && in_usage { exit }
+    in_usage && /^#/ { 
+      gsub(/^# ?/, "  "); 
+      gsub(/gelli/, ENVIRON["BIN"]); 
+      print 
+    }
+  ' "$CMD" || error "Command not found: ${CMD%%*/}"
+}
+
+echo
+echo ' '" Generic Edge Local Llama Interface"
+echo ' '" $(cat $SYS/VERSION) - LICENSE 0BSD"
+
+[ -n "$CMD" ] && usage $CMD || help
+
+echo
