@@ -1,0 +1,23 @@
+#!/bin/env sh
+
+# USAGE: gelli restart - Restart the running service
+#
+# gelli restart - Restart the running service
+
+GELLI_SERVICE="${GELLI_SERVICE:-localhost}"
+
+if [ "$GELLI_SERVICE" = "localhost" ]; then
+  echo "$IMAGE remote service - $GELLI_SERVICE"
+
+  exit 1
+elif ! gelli-stop > /dev/null; then
+  echo "$IMAGE stop failed - $GELLI_SERVICE"
+
+  exit 1
+elif ! gelli-start > /dev/null; then
+  echo "$IMAGE restart failed - $GELLI_SERVICE"
+
+  exit 1
+fi
+
+echo "$IMAGE restarted - $GELLI_SERVICE"

@@ -1,3 +1,36 @@
 #!/bin/env sh
 
-pkill llama-swap
+# USAGE: gelli stop - Stop the running service
+#
+# gelli stop - Stop the running service
+
+if ! ids=$(pidof llama-swap); then
+  echo "$BIN not running – internal"
+
+  exit 0
+fi
+
+kill $ids
+sleep 2
+
+# force-kill remaining processes
+if pidof llama-swap >/dev/null; then
+  kill -9 $ids
+fi
+
+timeout=5
+
+# wait up to 5s for processes to exit
+while [ $timeout -gt 0 ] && pidof llama-swap >/dev/null; do
+  sleep 1
+  timeout=$((timeout-1))
+done
+
+# report success
+if pidof llama-swap >/dev/null; then
+  echo "$BIN failed stop – internal"
+  exit 1
+else
+  echo "$BIN stopped – internal"
+  exit 0
+fi

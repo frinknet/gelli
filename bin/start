@@ -1,10 +1,12 @@
 #!/bin/env sh
 
+# USAGE: gelli start - Start the service for faster use
+#
+# gelli start - Stat the service for faster responses
+
 swapconf
 
 llama-swap \
-  --config "$BIN/swap.yaml" \
-  --listen "0.0.0.0:${GELLI_PORT}" \
+  --config "$SYS/swap.yaml" \
+  --listen "0.0.0.0:${GELLI_PORT:-7771}" \
   --watch-config
-
-SERVER_PID=$?

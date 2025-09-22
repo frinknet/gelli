@@ -110,37 +110,43 @@ prefix() {
   done
 }
 
-#swapconf() {
-#  local model lora names
-#
-#  {
-#
-#    echo "models:"
-#
-#    for model in /models/*; do
-#      [ -d "$model" ] || continue
-#      [ -e "$model/base.gguf" ] || continue
-#
-#      model="${model##*/}"
-#      names="$model"
-#
-#      for lora in /models/$model/*.gguf 2>/dev/null; do
-#          [ -e "$lora" ] || continue
-#
-#          lora="${lora##*/}"
-#          lora="${lora%.gguf}"
-#
-#          [ "$lora"  = "base" ] || continue
-#
-#          names="$names $lora"
-#      done
-#
-#      echo "  $model:"
-#      echo "    cmd: GELLI_PORT=\${PORT} gelli serve $names"
-#      echo "    ttl: ${GELLI_TTL:-60}"
-#    done
-#  } > "$BIN/swap.yaml"
-#}
+bincmd() {
+  cmd=$1
+
+  shift || true
+
+  BRANCH_DIR= $(aliasparse "$BIN-$cmd") "$@"
+}
+
+swapconf() {
+  local model lora names
+
+  {
+    echo "models:"
+
+    for model in /models/*; do
+      [ -e "$model/base.gguf" ] || continue
+
+      model="${model##*/}"
+      names="$model"
+
+      for lora in /models/$model/*.gguf; do
+        [ -e "$lora" ] || continue
+
+        lora="${lora##*/}"
+        lora="${lora%.gguf}"
+
+        [ "$lora"  = "base" ] || continue
+
+        names="$names $lora"
+      done
+
+      echo "  $model:"
+      echo "    cmd: $BIN serve \${PORT} $names"
+      echo "    ttl: ${GELLI_TTL:-60}"
+    done
+  } > "$SYS/swap.yaml" 2>/dev/null
+}
 
 cleanup() {
   cd /work
@@ -162,9 +168,13 @@ branch() {
   BRANCH="$1"
   export BRANCH_DIR="/tmp/$BRANCH"
 
-  git config --global --add safe.directory "$PWD" &> /dev/null || true
+  git config --global --add safe.directory "/work" &> /dev/null || true
   git worktree prune &> /dev/null || true
   git worktree add --force "$BRANCH_DIR" &> /dev/null || true
+
+  # Verify worktree exists before cd
+  [ -d "$BRANCH_DIR" ] || exit 1
+
   cd "$BRANCH_DIR"
 
   # Try to switch, create if doesn't exist
@@ -179,8 +189,9 @@ models() {
 
 loras() {
   [ -z "$@" ] && return
+  [ -z "$MODEL" ] && return
 
-  eval "$BIN-loras resolve \"\$@\""
+  eval "$BIN-loras resolve $MODEL \"\$@\""
 }
 
 BRANCH=
@@ -196,4 +207,6 @@ prefix bin "$BIN"
 prefix tools tool
 prefix agents agent
 
+#env
+#alias
 #echo common "$0" "$@"

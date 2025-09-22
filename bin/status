@@ -1,0 +1,17 @@
+#!/bin/env sh
+
+# USAGE: gelli status - Check if the service is running
+#
+# gelli status - Check if the service is running
+
+PORT=${GELLI_PORT:-7771}
+API=${GELLI_API_URL:-http://${GELLI_SERVICE:-localhost}:$PORT}
+KEY=${GELLI_API_KEY:-GELLI}
+
+if ! curl -sf "$API/health" &> /dev/nulll; then
+  echo "$IMAGE stopped - $GELLI_SERVICE"
+
+  exit 1
+fi
+
+echo "$IMAGE running - $GELLI_SERVICE"

@@ -21,23 +21,21 @@ if alias "agent-$AGENT" &> /dev/null; then
   AGENT=$(aliasparse "$AGENT")
 fi
 
-if ! [ -f "$AGENT" ]; then  
+if ! [ -f "$AGENT" ]; then
   error "agent not found"
 fi
 
 jsonparse < <(yamlparse "$AGENT")
 
 SYSTEM="# Identity\n${prompt}\n\n# Query\n$INSTRUCT\n\n# Instruction\n Use tools to immediately answer the query."
-BRANCH="$BIN-$AGENT"
-PORT=${GELLI_PORT:-7771}
 MODEL="${model}"
 LORAS="${lroas}"
 TEMP="${temp}"
-FLAGS="$GELLI_LLAMA_FLAGS"
 BRANCH="${GELLI_BRANCH:-$BIN-${AGENT##*/}}"
 TOOLS=""
 
-API=${GELLI_API_URL:-http://localhost:$PORT}
+PORT=${GELLI_PORT:-7771}
+API=${GELLI_API_URL:-http://${GELLI_SERVICE:-localhost}:$PORT}
 KEY=${GELLI_API_KEY:-GELLI}
 MAX=${GELLI_MAX_CALLS:-25}
 
@@ -59,13 +57,10 @@ call-ai() {
     --argjson tools "$TOOLS" \
     '{model:$model,messages:$messages,tools:$tools,tool_choice:"auto",stream:true}')
 
-  echo curl -sN "$API/v1/chat/completions" \
-    -H "Authorization: Bearer $KEY" \
-    -H "Content-Type: application/json"
   curl -sN "$API/v1/chat/completions" \
     -H "Authorization: Bearer $KEY" \
     -H "Content-Type: application/json" \
-    -d "$post"
+    -d "$post" 2>/dev/null
 }
 
 call-fn() {
@@ -99,19 +94,23 @@ fi
 
 TOOLS=$(list-fn)
 
-if [ -n "$LORAS" ]; then
-  for f in $LORAS; do FLAGS="$FLAGS --lora /loras/$f.gguf"; done
+branch $BRANCH || error "failed branch setup"
+
+if ! netstat -lan | grep -q :$PORT && [ -z "$GELLI_SERVICE" ]; then
+  bincmd serve "$PORT" "$MODEL" "$LORAS" & > /dev/null &
+
+  SERVER_PID=$!
+
+  echo "Starting..."
 fi
 
-[ -z "$GELLI_API_URL" ] && gelli-serve "$MODEL" "$LORAS" &> /dev/null &
-
-SERVER_PID=$!
-
-branch $BRANCH
-
+echo $API
 until curl -sf "$API/health" &> /dev/null; do
   sleep 2
+  echo "Waitting..."
 done
+
+echo "Running..."
 
 # Initialize chat history
 messages='[
@@ -124,14 +123,12 @@ tool_calls=""
 has_talked=""
 
 for iter in $(seq 1 "$MAX"); do
-  echo "$iter dude"
   while IFS= read -r data; do
     [ -z "$data" ] && continue
     [ "$data" = "data: [DONE]" ] && break
 
     finish=$(echo "${data#data: }" | jq -r '.choices[0].finish_reason // empty')
     delta=$(echo "${data#data: }" | jq -c '.choices[0].delta')
-
 
     #TODO: allow interaction
 
@@ -179,7 +176,6 @@ for iter in $(seq 1 "$MAX"); do
       fi
     done
 
-    # On finish_reason:tool_calls, process all buffered tool calls
     if [ "$finish" = "tool_calls" ]; then
       for fn_tool in $tool_calls; do
         fn_call="${fn_tool#tool_}"
@@ -204,14 +200,14 @@ for iter in $(seq 1 "$MAX"); do
 
     elif [ "$finish" = "stop" ]; then
       echo
+
       exit 0
+
     elif [ -n "$finish" ]; then
-      printf "\n\nEXIT %s\n" "$data" 
+      printf "\n\nEXIT %s\n" "$data"
       exit 0
     fi
-  done < <(echo)
-
-  call-ai "$messages"
+  done < <(call-ai "$messages")
 
   echo
 done

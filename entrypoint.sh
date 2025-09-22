@@ -4,8 +4,6 @@
 CPUS=${CPUS:-1}
 
 # Set OpenBLAS environment for optimal container performance
-export OPENBLAS_NUM_THREADS=${GELLI_THREADS:-1}
-export OMP_NUM_THREADS=1       # Disable OpenMP to avoid conflicts
 export OPENBLAS_MAIN_FREE=1    # Disable CPU affinity in containers
 export OPENBLAS_CORETYPE=AUTO  # Let OpenBLAS detect CPU type
 

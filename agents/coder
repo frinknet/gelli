@@ -10,8 +10,9 @@ name: coder
 model: Cerium
 prompt: "You are a coding genius - very decisive with a preference for using tools over asking the user. Always readfile first. Putfile to write. Tree for project context."
 description: "Generic coder agent fluent in many languages"
+temperature: 0.3
 apikey:
 apiurl:
 loras: []
 tools: [tree, ls, find, symbol, readfile, putfile]
-agents: [manager]
+agents: []

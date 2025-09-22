@@ -25,17 +25,17 @@ usage() {
     /^# USAGE:/ { in_usage=1; next }
     /^$/ && in_usage { exit }
     /^\*\// && in_usage { exit }
-    in_usage && /^#/ { 
-      gsub(/^# ?/, "  "); 
-      gsub(/gelli/, ENVIRON["BIN"]); 
-      print 
+    in_usage && /^#/ {
+      gsub(/^# ?/, "  ");
+      gsub(/gelli/, ENVIRON["BIN"]);
+      print
     }
   ' "$CMD" || error "Command not found: ${CMD%%*/}"
 }
 
 echo
-echo ' '" Generic Edge Local Llama Interface"
-echo ' '" $(cat $SYS/VERSION) - LICENSE 0BSD"
+echo ' '" $BIN - Generic Edge Local Llama Interface"
+echo ' '" $(cat $SYS/VERSION) - MIT Transparency License"
 
 [ -n "$CMD" ] && usage $CMD || help
 

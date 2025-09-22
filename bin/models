@@ -2,18 +2,18 @@
 set -e
 
 # USAGE: gelli models - Manage installed models
-# 
+#
 # gelli models [model]    - Lists installed models
 # gelli models import [model] - Import remote or local models
 # gelli models export [model] - Export models out of internal storage
 # gelli models delete [model] - Delete models from internal storage
-# 
+#
 # MODEL PATTERNS:
-# 
+#
 #   ol:model:tag    - Ollama
 #   hf:repo:file    - HuggingFace
 #   mr:model:quant  - MRadermacher
-# 
+#
 # Only works with .gguf files
 
 parse_ol() {
@@ -21,7 +21,7 @@ parse_ol() {
   slug=$(printf '%s\n' "$spec" | cut -d: -f1)
   tag=$(printf '%s\n' "$spec" | cut -s -d: -f2)
   tag="${tag:-latest}"
-  dest="/models/$(echo "$slug:$tag" | sed 's#[:/\]#-#g').gguf"
+  dest="/models/$(echo "$slug:$tag" | sed 's#[:/\]#-#g')/base.gguf"
 
   [ -f "$dest" ] && { echo "$dest"; return; }
 
@@ -40,7 +40,8 @@ parse_hf() {
   repo=$(printf '%s\n' "$spec" | cut -d: -f1)
   file=$(printf '%s\n' "$spec" | cut -s -d: -f2)
   file="${file:-model.gguf}"
-  dest="/models/$(echo "hf-${repo}-${file}" | sed 's#[:/\]#-#g')"
+  file="${file%.gguf}"
+  dest="/models/$(echo "hf-${repo}-${file}" | sed 's#[:/\]#-#g')/base.gguf"
 
   [ -f "$dest" ] && { echo "$dest"; return; }
 
@@ -54,7 +55,7 @@ parse_mr() {
   model=$(printf '%s\n' "$spec" | cut -d: -f1)
   quant=$(printf '%s\n' "$spec" | cut -s -d: -f2)
   file="$model.$quant"
-  dest="/models/mr-${file}.gguf"
+  dest="/models/mr-${file}/base.gguf"
 
   [ -f "$dest" ] && { echo "$dest"; return; }
 
@@ -68,7 +69,7 @@ parse() {
     ol:*) parse_ol "$1";;
     hf:*) parse_hf "$1";;
     mr:*) parse_mr "$1";;
-    *) echo "/models/${1##*/}.gguf";;
+    *) echo "/models/${1##*/}/base.gguf";;
   esac
 }
 
@@ -88,9 +89,10 @@ resolve() {
 
 outfile() {
   src="$1"
-  dest="/work/${1##*/}"
+  dest="/work/${1%/base.gguf}"
+  dest="/work/${dest##*/}.gguf"
 
-  mv "$src" "$dest" 
+  mv "$src" "$dest"
 }
 
 export() {
@@ -101,9 +103,9 @@ export() {
 
 infile() {
   src="$1"
-  dest="/models/${1##*/}"
+  dest="/models/${1##*/}/base.gguf"
 
-  [ "$src" != "$dest" ] && mv "$src" "$dest" 
+  [ "$src" != "$dest" ] && mv "$src" "$dest"
 }
 
 import() {
@@ -117,16 +119,23 @@ list() {
 
   cd /models
 
-  for f in $glob; do
-    [ -f "$f" ] && printf '%s\n' "${f%.*}"
+  for d in $glob; do
+    [ -d "$d" ] && printf '%s\n' "${d}"
   done
 }
 
 delete() {
   for arg in "$@"; do
     file=$(parse "$arg")
+    loras=$(find "${file%/base.gguf}" -maxdepth 1 -type f -not -name "base.gguf" 2>/dev/null | sed 's|.*/||; s/\.[^.]*$//' | tr '\n' ' ')
 
-    rm "$file" || error FAILED TO REMOVE $arg
+    [ -z "$loras" ] || error "REMOVE LORAS FIRST $loras"
+
+    read -p "Remove '${file%.gguf}'? [Y/n]" -n 1 res
+
+    if [[  "$res" =~ ^[Yy]?$ ]]; then
+      rm "$file" || error "FAILED TO REMOVE $arg"
+    fi
   done
 }
 

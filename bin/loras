@@ -2,24 +2,27 @@
 set -e
 
 # USAGE: gelli loras - Manage Low Ranking Adapters
-# 
-# gelli loras [model]	       - Lists installed LoRAs
-# gelli loras import [model]   - Import remote or local LoRAs
-# gelli loras export [model]   - Export LoRAs out of internal storage
-# gelli loras delete [model]   - Delete LoRAs from internal storage
-# 
+#
+# gelli loras [patern]                   - Lists LoRAs matching pattern
+# gelli loras list [model] [pattern]     - Lists LoRAs for a model matching patter
+# gelli loras import [model] [loras...]  - Import remote or local LoRAs for model
+# gelli loras export [model] [loras...]  - Export LoRAs out of internal storage
+# gelli loras delete [model] [loras...]  - Delete LoRAs from internal storage
+#
 # MODEL PATTERNS:
-# 
+#
 #   Use hf:repo:file for HuggingFace LoRAs.
-# 
+#
 #   Only works with .gguf files
+
+MODEL=
 
 parse_hf() {
   spec=${1#hf:}
   repo=$(printf '%s\n' "$spec" | cut -d: -f1)
   file=$(printf '%s\n' "$spec" | cut -s -d: -f2)
   file="${file:-adapter_model.gguf}"
-  dest="/loras/$(echo "${repo//\//-}-${file}" | sed 's#[:/\]#-#g')a"
+  dest="/model/$MODEL/$(echo "${repo//\//-}-${file}" | sed 's#[:/\]#-#g').gguf"
 
   [ -f "$dest" ] && { echo "$dest"; return; }
 
@@ -31,7 +34,7 @@ parse_hf() {
 parse() {
   case "$1" in
     hf:*) parse_hf "$1" ;;
-    *) echo "/loras/${1##*/}.sgguf" ;;
+    *) echo "/models/$MODEL/${1##*/}.gguf" ;;
   esac
 }
 
@@ -45,6 +48,8 @@ fetch() {
 
 resolve() {
   for arg in "${@}"; do
+    [ "$arg" = "base" ] && continue
+
     fetch $(parse "$arg") || error MISSING $arg
   done
 }
@@ -53,7 +58,7 @@ outfile() {
   src="$1"
   dest="/work/${1##*/}"
 
-  mv "$src" "$dest" 
+  mv "$src" "$dest"
 }
 
 export() {
@@ -63,33 +68,56 @@ export() {
 }
 
 infile() {
-  src="$1"
-  dest="/models/${1##*/}"
+  dest="$1"
+  src="/work/${1##*/}"
 
-  [ "$src" != "$dest" ] && mv "$src" "$dest" 
+  [ "$src" != "$dest" ] && mv "$src" "$dest"
 }
 
 import() {
   for arg in "$@"; do
-    infile $(parse "$arg") || error MISSING $arg
+    infile $(parse "$arg") || error "MISSING $arg"
   done
 }
 
 list() {
+  cd /model/$MODEL
+
   glob="${1:-*}"
 
-  cd /loras
-
   for f in $glob; do
+    [ "$f" = "base.gguf" ] && continue
     [ -f "$f" ] && printf '%s\n' "${f%.*}"
   done
 }
 
-delete() {
-  for arg in "$@"; do
-    file=$(parse "$arg")
+listall() {
+  for d in /models; do
+    [ -d "$d" ] || continue
 
-    rm "$file" || error FAILED TO REMOVE $arg
+    MODEL="${d##*/}"
+
+    echo "${MODEL} LoRAs:"
+    list "$MODEL" "$@" | sed "s/^/  /"
+    echo
+  done
+}
+
+delete() {
+  cd /models/$MODEL
+
+  glob="${@:-*}"
+
+  for f in "$glob"; do
+    file=$(parse "$f")
+
+    [ "$file" = "base.gguf" ] && continue
+
+    read -p "Remove '${file%.gguf}'? [Y/n]" -n 1 res
+
+    if [[ "$res" =~ ^[Yy]?$ ]]; then
+      rm "$file" || error "FAILED TO REMOVE ${f%.gguf}"
+    fi
   done
 }
 
@@ -103,11 +131,18 @@ CMD="$1"
 
 shift
 
+MODEL="${1%.gguf}"
+MODEL="${MODEL%/base}"
+MODEL="${MODEL##*/}"
+
+shift
+
 case "$CMD" in
-  ""|list) list "$@";;
+  "") listall "$MODEL" "$@";;
+  list) list "$@";;
   delete) delete "$@";;
   import) import "$@";;
   export) export "$@";;
-  resolve) parse "$@";;
+  resolve) resolve "$@";;
   *) eval "$BIN-help loras";;
 esac
