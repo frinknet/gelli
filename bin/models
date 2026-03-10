@@ -59,7 +59,7 @@ parse_mr() {
 
   [ -f "$dest" ] && { echo "$dest"; return; }
 
-  url="https://huggingface.co/mradermacher/$model/resolve/main/$file.gguf"
+  url="https://huggingface.co/mradermacher/$model-GGUF/resolve/main/$file.gguf"
 
   echo "$dest" "$url"
 }
@@ -103,8 +103,10 @@ export() {
 
 infile() {
   src="$1"
+  url="$2"
   dest="/models/${1##*/}/base.gguf"
 
+  [ -n "$url" ] && fetch "$src" "$url"
   [ "$src" != "$dest" ] && mv "$src" "$dest"
 }
 
