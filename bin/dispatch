@@ -13,9 +13,11 @@ AGENT="$1"
 shift || true
 
 INSTRUCT="$@"
-CONTEXT="$INSTRUCT"
+CONTENTS="$INSTRUCT"
 
-[ -t 0 ] || CONTEXT=$(cat)
+[ -t 0 ] || CONTENTS=$(cat)
+
+echo "$CONTENTS"
 
 if alias "agent-$AGENT" &> /dev/null; then
   AGENT=$(aliasparse "$AGENT")
@@ -27,7 +29,7 @@ fi
 
 jsonparse < <(yamlparse "$AGENT")
 
-SYSTEM="# Identity\n${prompt}\n\n# Query\n$INSTRUCT\n\n# Instruction\n Use tools to immediately answer the query."
+SYSTEM="# Identity\n${prompt}\n\n# Instruction\n Use your tools to answer the following request.\n\n# Request\n$INSTRUCT"
 MODEL="${model}"
 LORAS="${lroas}"
 TEMP="${temp}"
@@ -44,10 +46,10 @@ BATCH_IZE=${GELLI_BATCH_SIZE:-512}
 OUTPUT_SIZE=${GELLI_OUTPUT_SIZE:-999999}
 
 # Color codes
-C_THINK="\e[33m"    # yellow
-C_USER="\e[36m"     # cyan
-C_ASSIST="\e[32m"   # green
-C_TOOL="\e[35m"     # magenta
+C_THINK="\e[33m"
+C_USER="\e[32m"
+C_ASSIST="\e[36m"
+C_TOOL="\e[35m"
 C_RESET="\e[0m"
 
 call-ai() {
@@ -104,18 +106,16 @@ if ! netstat -lan | grep -q :$PORT && [ -z "$GELLI_SERVICE" ]; then
   echo "Starting..."
 fi
 
-echo $API
 until curl -sf "$API/health" &> /dev/null; do
   sleep 2
-  echo "Waitting..."
 done
 
-echo "Running..."
+echo
 
 # Initialize chat history
 messages='[
   {"role":"system","content":"'"$SYSTEM"'"},
-  {"role":"user","content":"'"$CONTEXT"'"}
+  {"role":"user","content":"'"$CONTENTS"'"}
 ]'
 
 # Initialize tool calls
@@ -124,6 +124,7 @@ has_talked=""
 
 for iter in $(seq 1 "$MAX"); do
   while IFS= read -r data; do
+      echo "$data"
     [ -z "$data" ] && continue
     [ "$data" = "data: [DONE]" ] && break
 
