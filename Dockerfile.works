@@ -1,7 +1,7 @@
 # GELLI - Generic Edge Local Llama Interface
 FROM alpine:latest AS build
 RUN apk add --no-cache \
-  build-base cmake git bash curl-dev openblas-dev go
+  build-base cmake git bash curl-dev openblas-dev go nodejs
 
 WORKDIR /src/llama.cpp
 
@@ -29,8 +29,11 @@ RUN cmake --build build --config Release
 
 WORKDIR /src/llama-swap
 RUN git clone --depth 1 https://github.com/mostlygeek/llama-swap .
-#RUN mkdir -p proxy/ui_dist
-# RUN touch proxy/ui_dist/index.html
+
+WORKDIR /src/llama-swap/ui-svelte
+RUN npm ci && npm run build
+
+WORKDIR /src/llama-swap
 RUN go build -ldflags="-X main.commit=$(git rev-parse --short HEAD) -X main.version=local_$(git rev-parse --short HEAD) -X main.date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" -o /usr/local/bin/llama-swap .
 
 # Final lean stage
