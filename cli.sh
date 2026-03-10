@@ -164,6 +164,7 @@ gelli_start() {
   if ! docker run --rm -d $FLAGS \
     --name $GELLI_SERVICE \
     --network $GELLI_NETWORK \
+    -p "$GELLI_PORT:$GELLI_PORT" \
     -v $HOME/.vimrc:/etc/vim/vimrc \
     -v $GELLI_DATABSE:/data \
     -v $GELLI_VOLUME:/models \
