@@ -1,7 +1,7 @@
 # GELLI - Generic Edge Local Llama Interface
 FROM alpine:latest AS build
 RUN apk add --no-cache \
-  build-base cmake git bash curl-dev openblas-dev go nodejs
+  build-base cmake git bash curl-dev openblas-dev go npm
 
 WORKDIR /src/llama.cpp
 
