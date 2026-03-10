@@ -93,7 +93,7 @@ tooling() {
 dispatch() {
   tooling "$1"
 
-  echo "${context:-$instruct}" | eval "$BIN-dispatch" "$1" "$instruct"
+  echo "${contents:-$instruct}" | eval "$BIN-dispatch" "$1" "$instruct"
 }
 
 prefix() {
@@ -143,7 +143,7 @@ swapconf() {
 
       echo "  $model:"
       echo "    cmd: $BIN serve \${PORT} $names"
-      echo "    ttl: ${GELLI_TTL:-60}"
+      echo "    ttl: ${GELLI_TTL:-600}"
     done
   } > "$SYS/swap.yaml" 2>/dev/null
 }
