@@ -53,6 +53,9 @@ COPY --from=build /src/llama.cpp/build/bin/*.so /usr/local/lib/
 # Install dependencies
 RUN apk add --no-cache jq vim git curl libstdc++ libgomp openblas
 
+# Fix library cache (CRITICAL)
+RUN ldconfig /usr/local/lib/
+
 # YQ must be installed seperately
 RUN mkdir -p /models /loras /work /tools /usr/local/lib \
  && curl -sSLo /usr/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 \
