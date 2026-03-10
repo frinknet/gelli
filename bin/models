@@ -108,8 +108,7 @@ infile() {
   dest="/models/${1##*/}/base.gguf"
 
   [ -n "$url" ] && fetch "$src" "$url"
-  [ -f "$dest" ] || echo mv "$src" "$dest"
-  [ -f "$dest" ] || mv "$src" "$dest"
+  [ -z "$url" ] || mv "$src" "$dest"
 }
 
 import() {
