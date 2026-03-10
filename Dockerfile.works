@@ -80,7 +80,7 @@ case "$1" in
   cmd="$1"
   shift || true
   set -- "$@"
-  exec source "$cmd"
+  source "$cmd"
   ;;
 "sh")
   shift
