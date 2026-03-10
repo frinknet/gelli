@@ -30,8 +30,11 @@ RUN cmake --build build --config Release
 WORKDIR /src/llama-swap
 RUN git clone --depth 1 https://github.com/mostlygeek/llama-swap .
 
-WORKDIR /src/llama-swap/ui-svelte
 RUN npm ci && npm run build
+RUN apk add --no-cache nodejs && \
+    cd ui-svelte && npm ci && npm run build && \
+    mkdir -p ../proxy/ui_dist && \
+    cp -r dist/* ../proxy/ui_dist/ || true
 
 WORKDIR /src/llama-swap
 RUN go build -ldflags="-X main.commit=$(git rev-parse --short HEAD) -X main.version=local_$(git rev-parse --short HEAD) -X main.date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" -o /usr/local/bin/llama-swap .
