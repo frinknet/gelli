@@ -7,7 +7,7 @@ exec tree -I 'node_modules|.*' "$dir"
 ---
 
 name: tree
-description: "List directory tree"
+description: "Use only to understand the project overview"
 parameters:
   type: object
   properties:

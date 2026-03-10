@@ -8,7 +8,7 @@ exec find "$dir" -type f ! -path "*/.git/*" ! -path "*/node_modules/*" -exec gre
 ---
 
 name: symbol
-description: "Search entire codebase for symbol"
+description: "Use only to find where a symbol is mentioned in the codebase"
 parameters:
   type: object
   properties:

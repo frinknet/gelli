@@ -2,21 +2,23 @@
 
 [ ! -d "$dir" ] && { echo "Error: directory not found"; exit 1; }
 
-find "$dir" -ipath "*$pat*" -type f ! -path "*/.*/*" ! -path "*/node_modules/*" 2>/dev/null | exec sort -u
+find "$dir" -ipath "*$pattern*" -type f ! -path "*/.*/*" ! -path "*/node_modules/*" 2>/dev/null | sort -u
+
+exit
 
 ---
 
 name: find
-description: "Find files deep in a directory filtered by pattern. Use when you need files with a certain ext or to investigate a wildcard include."
+description: "Use only to search for files by pattern in the code base"
 parameters:
   type: object
   properties:
     dir:
       type: string
-      description: "Base directory to search. Must bea relative directory inside you rproject. Usually the default is fine unless you have a large project."
+      description: "Base directory to search. Always starts with ./"
       default: "."
     pattern:
       type: string
-      description: "Optional globbing pattern. Use wehn you want to find files that match a certain pattern or extension."
+      description: "Optional globbing pattern. Use when you want to find files that match a certain pattern or extension."
       default: "*"
   required: []

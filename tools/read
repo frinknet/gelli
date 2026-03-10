@@ -1,0 +1,27 @@
+#!/gelli/bin/env sh --tool
+
+[ ! -e "$file" ] && { echo "Error: file not found"; exit 1; }
+
+if [ -n "$start" ] && [ -n "$end" ]; then
+  exec sed -n "${start},${end}p" "$file"
+else
+  exec cat "$file"
+fi
+
+---
+
+name: read
+description: "Use only when you need to read a file contents"
+parameters:
+  type: object
+  properties:
+    file:
+      type: string
+      description: "Filename you want  to read"
+    start:
+      type: string
+      description: "Opttional start line number"
+    end:
+      type: string
+      description: "Optional end lines linde number"
+  required: [file]
