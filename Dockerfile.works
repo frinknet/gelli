@@ -48,7 +48,7 @@ COPY --from=build /src/llama.cpp/build/bin/llama* /usr/local/bin/
 COPY --from=build /usr/local/bin/llama-swap /usr/local/bin/
 
 # Copy ALL shared libraries in one layer
-COPY --from=build /src/llama.cpp/build/bin/*.so /usr/local/lib/
+COPY --from=build /src/llama.cpp/build/bin/*.so* /usr/local/lib/
 
 # Install dependencies
 RUN apk add --no-cache jq vim git curl libstdc++ libgomp openblas
