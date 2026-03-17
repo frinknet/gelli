@@ -4,7 +4,7 @@ set -e
 REPO="ghcr.io/frinknet/gelli"
 IMAGE="${REPO##*/}"
 VERSION="latest"
-GITROOT=$(git rev-parse --show-toplevel 2>/dev/null)
+GITROOT=$(git rev-parse --show-toplevel 2>/dev/null || true)
 FLAGS="$GELLI_DOCKER_FLAGS"
 CPU=
 
@@ -168,7 +168,25 @@ gelli_start() {
     -v $HOME/.vimrc:/etc/vim/vimrc \
     -v $GELLI_DATABSE:/data \
     -v $GELLI_VOLUME:/models \
+    -e GELLI_TTL \
+    -e GELLI_PORT \
+    -e GELLI_TEMP \
+    -e GELLI_MODEL \
+    -e GELLI_LORAS \
     -e GELLI_MEMORY \
+    -e GELLI_API_URL \
+    -e GELLI_API_KEY \
+    -e GELLI_CTX_SIZE \
+    -e GELLI_BATCH_SIZE \
+    -e GELLI_OUTPUT_SIZE \
+    -e GELLI_SYSTEM_PROMPT \
+    -e GELLI_LLAMA_FLAGS \
+    -e GELLI_MAX_CALLS \
+    -e GELLI_SERVICE \
+    -e GELLI_THREADS \
+    -e UID=$(id -u) \
+    -e GID=$(id -g) \
+    -e TERM \
     "$IMAGE" start > /dev/null 2>&1; then
   	echo "$IMAGE start failed - $GELLI_SERVICE"
 
@@ -192,6 +210,46 @@ gelli_restart() {
   fi
 
   echo "$IMAGE restarted - $GELLI_SERVICE"
+
+  return 0
+}
+
+gelli_serve() {
+  gelli_stop > /dev/null
+
+  if ! docker run --rm -d $FLAGS \
+    --name $GELLI_SERVICE \
+    --network $GELLI_NETWORK \
+    -p "$1:$1" \
+    -v $HOME/.vimrc:/etc/vim/vimrc \
+    -v $GELLI_DATABSE:/data \
+    -v $GELLI_VOLUME:/models \
+    -e GELLI_TTL \
+    -e GELLI_PORT \
+    -e GELLI_TEMP \
+    -e GELLI_MODEL \
+    -e GELLI_LORAS \
+    -e GELLI_MEMORY \
+    -e GELLI_API_URL \
+    -e GELLI_API_KEY \
+    -e GELLI_CTX_SIZE \
+    -e GELLI_BATCH_SIZE \
+    -e GELLI_OUTPUT_SIZE \
+    -e GELLI_SYSTEM_PROMPT \
+    -e GELLI_LLAMA_FLAGS \
+    -e GELLI_MAX_CALLS \
+    -e GELLI_SERVICE \
+    -e GELLI_THREADS \
+    -e UID=$(id -u) \
+    -e GID=$(id -g) \
+    -e TERM \
+    "$IMAGE" serve "$@" > /dev/null 2>&1; then
+  	echo "$IMAGE serve failed - PORT:$1"
+
+    return 1
+  fi
+
+  echo "$IMAGE started - PORT:$1"
 
   return 0
 }
@@ -238,8 +296,6 @@ gelli_cli() {
       -e GELLI_MAX_CALLS \
       -e GELLI_SERVICE \
       -e GELLI_THREADS \
-      -e UID=$(id -u) \
-      -e GID=$(id -g) \
       -e TERM \
       $NAME $IMAGE "$@"
   else
@@ -281,6 +337,7 @@ gelli_cli() {
 case "${1:-}" in
 update) gelli_update "$2";;
 status) gelli_status;;
+serve) gelli_serve "$2" "$3";;
 start) gelli_start;;
 stop) gelli_stop;;
 restart) gelli_restart;;

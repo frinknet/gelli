@@ -57,6 +57,7 @@ parse_mr() {
   file="$model.$quant"
   dest="/models/mr-${file}/base.gguf"
 
+  [[ "$quant" = i1-* ]] && model="${model}-i1"
   [ -f "$dest" ] && { echo "$dest"; return; }
 
   url="https://huggingface.co/mradermacher/$model-GGUF/resolve/main/$file.gguf"
