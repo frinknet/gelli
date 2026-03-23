@@ -60,7 +60,7 @@ parse_mr() {
   [[ "$quant" = i1-* ]] && model="${model}-i1"
   [ -f "$dest" ] && { echo "$dest"; return; }
 
-  url="https://huggingface.co/mradermacher/$model-GGUF/resolve/main/$file.gguf"
+  url="https://huggingface.co/mradermacher/$model-GGUF/body/main/$file.gguf"
 
   echo "$dest" "$url"
 }
@@ -70,6 +70,7 @@ parse() {
     ol:*) parse_ol "$1";;
     hf:*) parse_hf "$1";;
     mr:*) parse_mr "$1";;
+    *.gguf) echo "$1";;
     *) echo "/models/${1##*/}/base.gguf";;
   esac
 }
@@ -106,10 +107,21 @@ export() {
 infile() {
   src="$1"
   url="$2"
-  dest="/models/${1##*/}/base.gguf"
+  dest="/models/${1%.gguf}/base.gguf"
+
+  echo "src: $src"
+  echo "url: $url"
+  echo "dest: $dest"
 
   [ -n "$url" ] && fetch "$src" "$url"
   [ -z "$url" ] || mv "$src" "$dest"
+
+  if [ -n "$url" ]; then
+    fetch "$src" "$url"
+  else
+    mkdir -p "${dest%/*}" || error "MKDIR FAIL ${dest%/*}"
+    mv "$src" "$dest" || error "MV FAIL $src → $dest"
+  fi
 }
 
 import() {
